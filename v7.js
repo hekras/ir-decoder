@@ -523,7 +523,7 @@ class PViewportData {
 // ======================================================
 const sequence = [
     { tick: 200, cls: 1, vpdat: 1, vpstat: 1, cool: 1},
-    { tick: 250, glitch: 1},
+    { tick: 250, glitch2: 1},
 ];
 
 class PTick{
@@ -587,6 +587,8 @@ window.addEventListener('load', function() {
             dc.clearRect(vpdat.x+2, vpdat.y+2, 100, vpdat.h-4);
         }
         if (sequence[tick.pc].glitch !== undefined) glitch();
+        if ((sequence[tick.pc].glitch2 !== undefined)&&(tick.c%4 != 0)) glitch();
+        if ((sequence[tick.pc].glitch2 !== undefined)&&(tick.c%4 == 0)) { dc.clearRect(0,0,canvas.width,canvas.height); vpdat.render(dc, vpstat.hover3); vpstat.render(dc); };
         if (sequence[tick.pc].particle !== undefined) {
             dc.fillStyle = "rgba(255,255,255,1.0)";
             for (let i = 0; i < dots.length; i++) {
