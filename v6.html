@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html>
+   <head>
+        <meta name="viewport" content="width=device-width,
+             maximum-scale=0.9,user-scalable=0">
+        <meta charset="UTF-8">
+        <title>CR!SP</title>
+        <link rel="stylesheet" href="v5.css"/>
+        <style>
+            body {
+                  font-family: Calibri, sans-serif;
+            }
+        </style>
+
+   </head>
+   <body>
+      <div id="timing"></div>
+      <div id="settings"></div>
+      <div id="trigger-names"></div>
+      <div id="codebook">
+         <input type="text" id="codebook-input" placeholder="Codebook" style="position: absolute; left: 30px; top: 900px; z-index: 100;"/>
+         <button id="codebook-button" onclick="updateCodebook()" style="position: absolute; left: 30px; top: 900px; z-index: 100; left: 200px;">Add</button>
+      </div>
+      <!--textarea id="code" style="position: absolute; left: 20px;top: 530px; width: 250px; height: 300px;"></textarea-->
+      <script src="v7.js"></script>
+   </body>
+</html>
