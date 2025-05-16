@@ -522,8 +522,9 @@ class PViewportData {
 // Tick class
 // ======================================================
 const sequence = [
-    { tick: 200, cls: 1, vpdat: 1, vpstat: 1, cool: 1},
-    { tick: 250, glitch2: 1},
+//    { tick: 200, cls: 1, vpdat: 1, vpstat: 1, cool: 1},
+    { tick: 200, cls: 1, vpdat: 1, vpstat: 1},
+//    { tick: 250, glitch2: 1},
 ];
 
 class PTick{
