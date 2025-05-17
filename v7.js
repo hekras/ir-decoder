@@ -524,25 +524,47 @@ class PViewportData {
 const sequence = [
 //    { tick: 200, cls: 1, vpdat: 1, vpstat: 1, cool: 1},
     { tick: 200, cls: 1, vpdat: 1, vpstat: 1},
-//    { tick: 250, glitch2: 1},
+    { tick: 250, glitch: 1},
 ];
 
 class PTick{
     constructor(){
         this.c = 0; // the counter
         this.pc = 0; // srquence program counter
+        this.seq = sequence;
     }
 
     t(){
         this.c++
-        if (this.c >= sequence[this.pc].tick){
-            this.pc = (this.pc == sequence.length-1) ? 0 : this.pc+1;
+        if (this.c >= this.seq[this.pc].tick){
+            this.pc = (this.pc == this.seq.length-1) ? 0 : this.pc+1;
             if (this.pc == 0) this.c = 0;
         }
     }
 
     static progress(){
-        return (sequence[this.pc].tick - this.c)/seq.tick;
+        return (this.seq[this.pc].tick - this.c)/seq.tick;
+    }
+    cls(){
+        return (this.seq[this.pc].cls != undefined);
+    }
+    vpdat(){
+        return (this.seq[this.pc].vpdat != undefined);
+    }
+    vpstat(){
+        return (this.seq[this.pc].vpstat != undefined);
+    }
+    cool(){
+        return (this.seq[this.pc].cool != undefined);
+    }
+    glitch(){
+        return (this.seq[this.pc].glitch != undefined);
+    }
+    glitch2(){
+        return (this.seq[this.pc].glitch2 != undefined);
+    }
+    particle(){
+        return (this.seq[this.pc].particle != undefined);
     }
 }
 
@@ -581,16 +603,16 @@ window.addEventListener('load', function() {
     const tick = new PTick();
     
     function animate() {
-        if (sequence[tick.pc].cls !== undefined) dc.clearRect(0,0,canvas.width,canvas.height);
-        if (sequence[tick.pc].vpdat !== undefined) vpdat.render(dc, vpstat.hover3);
-        if (sequence[tick.pc].vpstat !== undefined) vpstat.render(dc);
-        if (sequence[tick.pc].cool !== undefined){
+        if (tick.cls()) dc.clearRect(0,0,canvas.width,canvas.height);
+        if (tick.vpdat()) vpdat.render(dc, vpstat.hover3);
+        if (tick.vpstat()) vpstat.render(dc);
+        if (tick.cool()){
             dc.clearRect(vpdat.x+2, vpdat.y+2, 100, vpdat.h-4);
         }
-        if (sequence[tick.pc].glitch !== undefined) glitch();
-        if ((sequence[tick.pc].glitch2 !== undefined)&&(tick.c%4 != 0)) glitch();
-        if ((sequence[tick.pc].glitch2 !== undefined)&&(tick.c%4 == 0)) { dc.clearRect(0,0,canvas.width,canvas.height); vpdat.render(dc, vpstat.hover3); vpstat.render(dc); };
-        if (sequence[tick.pc].particle !== undefined) {
+        if (tick.glitch()) glitch();
+        if ((tick.glitch2())&&(tick.c%4 != 0)) glitch();
+        if ((tick.glitch2())&&(tick.c%4 == 0)) { dc.clearRect(0,0,canvas.width,canvas.height); vpdat.render(dc, vpstat.hover3); vpstat.render(dc); };
+        if (tick.particle()) {
             dc.fillStyle = "rgba(255,255,255,1.0)";
             for (let i = 0; i < dots.length; i++) {
                 dots[i].update();
@@ -604,7 +626,7 @@ window.addEventListener('load', function() {
             }
             angle += 0.01;
         }
-        tick.t(sequence);
+        tick.t();
         requestAnimationFrame(animate);
     }
 
