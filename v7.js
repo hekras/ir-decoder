@@ -119,14 +119,15 @@ class Dot {
 // ======================================================
 // Viewport Class for statistic data
 // ======================================================
-class PViewportStatic {
-    constructor(x, y, w, h) {
+class PViewportStatistic {
+    constructor(x, y, w, h, vpdat) {
         this.x = x;
         this.y = y;
         this.w = w;
         this.h = h;
         this.xmax = 2500
         this.graph = []
+        this.data = vpdat.data;
         this.triggers = [
             {key:"A", level:0, t1:100, t2:450},
             {key:"B", level:1, t1:50, t2:800},
@@ -197,7 +198,7 @@ class PViewportStatic {
         });
     }
 
-    calculate(data){
+    calculate(){
         this.graph = [];
         const dx = this.w / 250;
         const dt = this.xmax / 250;
@@ -211,11 +212,11 @@ class PViewportStatic {
               high:0
             });
         }        
-        for (var i = 0; i < data.length-1; i++){
-            const dt = data[i+1].x - data[i].x;
+        for (var i = 0; i < this.data.length-1; i++){
+            const dt = this.data[i+1].x - this.data[i].x;
             const slot = this.graph.findIndex((s) => dt >= s.t1 && dt < s.t2);
             if (slot >= 0){
-              if (data[i].y == 0) this.graph[slot].low++;
+              if (this.data[i].y == 0) this.graph[slot].low++;
               else this.graph[slot].high++;
             }
         }
@@ -233,17 +234,17 @@ class PViewportStatic {
             s.low = s.low*100;
         });
 
-        for (var i = 0; i < data.length-1; i++){
-            const dt = data[i+1].x - data[i].x;
-            const trigger = this.triggers.find((t) => dt >= t.t1 && dt < t.t2 && data[i].y == t.level);
+        for (var i = 0; i < this.data.length-1; i++){
+            const dt = this.data[i+1].x - this.data[i].x;
+            const trigger = this.triggers.find((t) => dt >= t.t1 && dt < t.t2 && this.data[i].y == t.level);
             if (trigger != null){
-              data[i].key = trigger.key;  
+              this.data[i].key = trigger.key;  
             }
             else{
-              data[i].key = "NOISE";  
+              this.data[i].key = "NOISE";  
             }
           }
-          data[data.length - 1].key = "STOP";
+          this.data[this.data.length - 1].key = "STOP";
         
         
         this.calculateGraph();
@@ -357,7 +358,7 @@ class PViewportStatic {
 // Viewport Class for decoder
 // ======================================================
 class PViewportDecoder {
-    constructor(x, y, w, h) {
+    constructor(x, y, w, h, vpdat) {
         this.x = x;
         this.y = y;
         this.w = w;
@@ -365,6 +366,9 @@ class PViewportDecoder {
         this.codebook = 
         [{"code":"BADCDCDABABABABC","key":"A"},{"code":"BCBADABABABABABCDABA","key":"EOL"},{"code":"BCBABADCDABCBABABA","key":"O"},{"code":"BABABCDCDABCBADABA","key":"L"},{"code":"DABABABCDABABCDABA","key":"D"},{"code":"BCBABADCDABCDABABA","key":"H"},{"code":"BCDABABCDABCBABADA","key":"N"},{"code":"BABCDABCDABCBADC","key":"M"},{"code":"BCDABABCDABCDABC","key":"!"},{"code":"BADCDCDCBADABABA","key":"X"},{"code":"DCBADCDABABCDC","key":"E"},{"code":"BABABCDCDCDABCDA","key":"R"},{"code":"DABABABCDABABABCBA","key":"C"},{"code":"BABCDABCDCDABCBA","key":"S"},{"code":"BCDABABCDCDABABABA","key":"P"},{"code":"DCBADCDABABABCDA","key":"B"},{"code":"BABADABCDCBADABC","key":"Y"},{"code":"BADABABABCDABABABABA","key":"_"},{"code":"BABCBADABCBADABCDA","key":"2"},{"code":"BABCBADABCBADCDC","key":"5"}];
         this.message = [];
+        this.data = vpdat.data;
+//        this.vpdat = vpdat;
+        this.messagePposlow = vpdat.y + vpdat.h - 50;
     }
 
     set(x, y, w, h) {
@@ -374,36 +378,51 @@ class PViewportDecoder {
         this.h = h;
     }
 
-    decodeData(data){
+    decodeData(){
         let code = "";
         let xpos = -1;
         let StartIndex = 0;
         this.message = [];
       
-        for (var i = 0; i < data.length; i++){
-            switch(data[i].key){
+        for (var i = 0; i < this.data.length; i++){
+            switch(this.data[i].key){
             case "START":
                 code = "";
-                xpos = data[i+1].x;
+                xpos = this.data[i+1].x;
                 StartIndex = i;
                 break;
             case "STOP":
                 const k = this.codebook.find((c) => c.code == code);
                 if (k != null){
                     this.message.push({ code: code, key: k.key, xpos: xpos });
-                    data[StartIndex].code = k.key;
+                    this.data[StartIndex].code = k.key;
                 } else {
                     this.codebook.push({ code: code, key: code});
                     this.message.push({ code: code, key: code, xpos: xpos });
-                    data[StartIndex].code = code;
+                    this.data[StartIndex].code = code;
                 }
                 break;
             default:
-                code += data[i].key;
+                code += this.data[i].key;
                 break;
             }
         }
-        console.log(JSON.stringify(this.message));
+//        console.log(JSON.stringify(this.message));
+    }
+    render(dc){
+        if (this.data.length > 0){
+            const dx = this.w / this.data[this.data.length-1].x;
+            dc.fillStyle = "yellow";
+            dc.font = "28px Arial";
+            dc.lineWidth = 2;
+            for (var i = 0; i < this.data.length; i++){
+              const x = Math.floor(this.data[i].x * dx + this.x);
+              if (this.data[i].key == "START"){
+                const xx = Math.floor(this.data[i+1].x * dx + this.x);
+                dc.fillText(this.data[i].code, xx, this.messagePposlow + 30);
+              } 
+            }
+        }
     }
 }
 
@@ -455,8 +474,6 @@ class PViewportData {
             const yposhigh = 100;
         
             dc.strokeStyle = "lightgreen";
-            dc.fillStyle = "yellow";
-            dc.font = "28px Arial";
             dc.lineWidth = 2;
             dc.beginPath();
             var first = true;
@@ -472,10 +489,6 @@ class PViewportData {
                 previousy = this.data[i].y; 
                 dc.lineTo(x, (previousy == 0) ? yposlow : yposhigh);
               }
-              if (this.data[i].key == "START"){
-                const xx = Math.floor(this.data[i+1].x * dx + this.x);
-                dc.fillText(this.data[i].code, xx, yposlow + 30);
-              } 
             }
             dc.stroke();
 
@@ -513,7 +526,7 @@ class PViewportData {
             dc.fillText(text, this.cursorx - textWidth/2, this.y + this.h - 10);
             dc.fillStyle = "yellow";
             dc.font = "40px Arial";
-            dc.fillText("Analyzer v7", 30, 35);
+            dc.fillText("Logic analyzer v7", 30, 35);
         }
     }
 }
@@ -522,28 +535,39 @@ class PViewportData {
 // Tick class
 // ======================================================
 const sequence = [
-//    { tick: 200, cls: 1, vpdat: 1, vpstat: 1, cool: 1},
-    { tick: 200, cls: 1, vpdat: 1, vpstat: 1},
-    { tick: 250, glitch: 1},
+    { tick: 100, cls: 1, vpdat: 1, vpdatProgress: 1 },
+    { tick: 200, cls: 1, vpdat: 1, vpstat: 1, vpstatProgress: 1},
+    { tick: 300, cls: 1, vpdat: 1, vpstat: 1, vpdecoder: 1, vpdecoderProgress: 1},
+    { tick: 400, cls: 1, vpdat: 1, vpstat: 1, vpdecoder: 1},
+    { tick: 450, vpdat: 1, vpstat: 1, vpdecoder: 1, glitch: 1},
+    { tick: 500, cls: 1, vpdat: 1, vpstat: 1, vpdecoder: 1},
+//    { tick: 250, glitch: 1},
 ];
 
 class PTick{
     constructor(){
         this.c = 0; // the counter
-        this.pc = 0; // srquence program counter
+        this.pc = 0; // sequence program counter
         this.seq = sequence;
+        this.dt = this.seq[0].tick; // delta time
     }
 
     t(){
         this.c++
         if (this.c >= this.seq[this.pc].tick){
             this.pc = (this.pc == this.seq.length-1) ? 0 : this.pc+1;
-            if (this.pc == 0) this.c = 0;
+            if (this.pc == 0){
+                this.c = 0;
+                this.dt = this.seq[this.pc].tick;
+            } 
+            else{
+                this.dt = this.seq[this.pc].tick - this.seq[this.pc-1].tick;
+            }
         }
     }
 
-    static progress(){
-        return (this.seq[this.pc].tick - this.c)/seq.tick;
+    progress(){
+        return (this.seq[this.pc].tick - this.c)/this.dt;
     }
     cls(){
         return (this.seq[this.pc].cls != undefined);
@@ -566,6 +590,18 @@ class PTick{
     particle(){
         return (this.seq[this.pc].particle != undefined);
     }
+    vpdatProgress(){
+        return (this.seq[this.pc].vpdatProgress != undefined);
+    }
+    vpstatProgress(){
+        return (this.seq[this.pc].vpstatProgress != undefined);
+    }
+    vpdecoder(){
+        return (this.seq[this.pc].vpdecoder != undefined);
+    }
+    vpdecoderProgress(){
+        return (this.seq[this.pc].vpdecoderProgress != undefined);
+    }
 }
 
 // ======================================================
@@ -579,11 +615,11 @@ window.addEventListener('load', function() {
     const vpdat = new PViewportData(30, 50, width-60, 200);
     vpdat.setData(data0);
 
-    const vpstat = new PViewportStatic(30, 300, width-60, 200);
-    vpstat.calculate(data0);
+    const vpstat = new PViewportStatistic(30, 300, width-60, 200, vpdat);
+    vpstat.calculate();
 
-    const vpdecoder = new PViewportDecoder(30, 600, width-60, 200);
-    vpdecoder.decodeData(vpdat.data);
+    const vpdecoder = new PViewportDecoder(30, 600, width-60, 200, vpdat);
+    vpdecoder.decodeData();
 
     let dots = [];
     for (let i = 0; i < 1000; i++) {
@@ -606,8 +642,15 @@ window.addEventListener('load', function() {
         if (tick.cls()) dc.clearRect(0,0,canvas.width,canvas.height);
         if (tick.vpdat()) vpdat.render(dc, vpstat.hover3);
         if (tick.vpstat()) vpstat.render(dc);
-        if (tick.cool()){
-            dc.clearRect(vpdat.x+2, vpdat.y+2, 100, vpdat.h-4);
+        if (tick.vpdatProgress()){
+            dc.clearRect(vpdat.x+2 + vpdat.w *(1-tick.progress())-4, vpdat.y+2, vpdat.w * tick.progress(), vpdat.h-4);
+        }
+        if (tick.vpstatProgress()){
+            dc.clearRect(vpstat.x+2 + vpstat.w *(1-tick.progress())-4, vpstat.y+2, vpstat.w * tick.progress(), vpstat.h-4);
+        }
+        if (tick.vpdecoder()) vpdecoder.render(dc);
+        if (tick.vpdecoderProgress()){
+            dc.clearRect(vpdat.x+2 + vpdat.w *(1-tick.progress())-4, vpdat.y+vpdat.h-50, vpdat.w * tick.progress(), 45);
         }
         if (tick.glitch()) glitch();
         if ((tick.glitch2())&&(tick.c%4 != 0)) glitch();
@@ -626,6 +669,7 @@ window.addEventListener('load', function() {
             }
             angle += 0.01;
         }
+
         tick.t();
         requestAnimationFrame(animate);
     }
