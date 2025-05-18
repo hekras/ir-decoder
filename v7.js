@@ -349,7 +349,7 @@ class PViewportStatistic {
 
         dc.fillStyle = "yellow";
         dc.font = "40px Arial";
-        dc.fillText("Statistics", 30, 290);
+        dc.fillText("Pulse timing statistics", 30, 290);
     }
 
 }
@@ -409,9 +409,15 @@ class PViewportDecoder {
         }
 //        console.log(JSON.stringify(this.message));
     }
-    render(dc){
+    moveMouse(mousex, mousey) {
+        this.cursorx = mousex;
+        this.cursory = mousey;  
+        if (this.cursorx < 30) this.cursorx = 30;
+        else if (this.cursorx > this.x+this.w) this.cursorx = this.x+this.w;
+    }
+    render(dc, hover3){
         if (this.data.length > 0){
-            const dx = this.w / this.data[this.data.length-1].x;
+            let dx = this.w / this.data[this.data.length-1].x;
             dc.fillStyle = "yellow";
             dc.font = "28px Arial";
             dc.lineWidth = 2;
@@ -422,6 +428,67 @@ class PViewportDecoder {
                 dc.fillText(this.data[i].code, xx, this.messagePposlow + 30);
               } 
             }
+            dc.fillStyle = "yellow";
+            dc.font = "40px Arial";
+            dc.fillText("Decoding sequences", 30, 540);
+
+            dc.strokeStyle = "lightgreen";
+            dc.lineWidth = 1;
+
+            dx = 2000/this.w/25;
+            let yposlow = 600;
+            let yposhigh = 580;
+            let xoffset = 0;
+            let xmax = 0;
+        
+            dc.strokeStyle = "lightgreen";
+            dc.lineWidth = 2;
+            dc.beginPath();
+            var first = true;
+            var previousy = 0;
+            for (var i = 0; i < this.data.length; i++){
+              const x = Math.floor(this.data[i].x * dx + this.x);
+              if (first){
+                previousy = this.data[i].y; 
+                first = false;
+                dc.moveTo(x, (previousy == 0) ? yposlow : yposhigh);
+                dc.fillStyle = (hover3 != null && hover3.key == this.data[i].key) ? "yellow" : "lightgray";
+                dc.font = "16px Arial";
+                dc.fillText(this.data[i].key, x-xoffset+2, yposlow-3);
+              }else{
+                dc.lineTo(x-xoffset, (previousy == 0) ? yposlow : yposhigh);
+                if (this.data[i].key == "START"){
+                    yposhigh += 40
+                    yposlow += 40;
+                    xmax = Math.max(xmax, x - xoffset);
+                    xoffset = x - this.x;
+                    previousy = this.data[i].y; 
+                    dc.moveTo(x-xoffset, (previousy == 0) ? yposlow : yposhigh);
+                } 
+                previousy = this.data[i].y; 
+                dc.lineTo(x-xoffset, (previousy == 0) ? yposlow : yposhigh);
+                dc.fillStyle = (hover3 != null && hover3.key == this.data[i].key) ? "yellow" : "lightgray";
+                dc.font = "16px Arial";
+                dc.fillText(this.data[i].key, x-xoffset+2, yposlow-3);
+              }
+            }
+            dc.stroke();
+
+            // render cursor
+            dc.fillStyle = dc.strokeStyle = "lightgreen";
+            dc.lineWidth = 1;
+            dc.beginPath();
+            if (this.cursorx > xmax) this.cursorx = xmax;
+            dc.moveTo(this.cursorx, this.y);
+            dc.lineTo(this.cursorx, yposlow);
+            dc.stroke();
+            dc.font = "16px Arial";
+            const text = "" + Math.floor((this.cursorx-30) / (dx)) + " us";
+            const textWidth = dc.measureText(text).width;
+            dc.fillText(text, this.cursorx - textWidth/2, this.y - 5);
+            dc.fillText(text, this.cursorx - textWidth/2, yposlow+ 20);
+
+
         }
     }
 }
@@ -526,7 +593,10 @@ class PViewportData {
             dc.fillText(text, this.cursorx - textWidth/2, this.y + this.h - 10);
             dc.fillStyle = "yellow";
             dc.font = "40px Arial";
-            dc.fillText("Logic analyzer v7", 30, 35);
+            const text2 = "Logic analyzer v7";
+            const textWidth2 = dc.measureText(text2).width;
+            dc.fillText(text2, this.w - textWidth2, 40);
+            dc.fillText("Data capture", 30, 40);
         }
     }
 }
@@ -535,11 +605,11 @@ class PViewportData {
 // Tick class
 // ======================================================
 const sequence = [
-    { tick: 100, cls: 1, vpdat: 1, vpdatProgress: 1 },
+    { tick: 100, cls: 1, vpdat: 1, vpdatProgress: 1, vpdecoder: 1},
     { tick: 200, cls: 1, vpdat: 1, vpstat: 1, vpstatProgress: 1},
     { tick: 300, cls: 1, vpdat: 1, vpstat: 1, vpdecoder: 1, vpdecoderProgress: 1},
     { tick: 400, cls: 1, vpdat: 1, vpstat: 1, vpdecoder: 1},
-    { tick: 450, vpdat: 1, vpstat: 1, vpdecoder: 1, glitch: 1},
+    { tick: 450, vpdat: 1, vpstat: 1, vpdecoder: 1, glitch2: 1},
     { tick: 500, cls: 1, vpdat: 1, vpstat: 1, vpdecoder: 1},
 //    { tick: 250, glitch: 1},
 ];
@@ -618,7 +688,7 @@ window.addEventListener('load', function() {
     const vpstat = new PViewportStatistic(30, 300, width-60, 200, vpdat);
     vpstat.calculate();
 
-    const vpdecoder = new PViewportDecoder(30, 600, width-60, 200, vpdat);
+    const vpdecoder = new PViewportDecoder(30, 580, width-60, 300, vpdat);
     vpdecoder.decodeData();
 
     let dots = [];
@@ -648,9 +718,10 @@ window.addEventListener('load', function() {
         if (tick.vpstatProgress()){
             dc.clearRect(vpstat.x+2 + vpstat.w *(1-tick.progress())-4, vpstat.y+2, vpstat.w * tick.progress(), vpstat.h-4);
         }
-        if (tick.vpdecoder()) vpdecoder.render(dc);
+        if (tick.vpdecoder()) vpdecoder.render(dc, vpstat.hover3);
         if (tick.vpdecoderProgress()){
-            dc.clearRect(vpdat.x+2 + vpdat.w *(1-tick.progress())-4, vpdat.y+vpdat.h-50, vpdat.w * tick.progress(), 45);
+            dc.clearRect(vpdat.x+2 + vpdat.w *(1-tick.progress())-4, vpdat.y+vpdat.h-48, vpdat.w * tick.progress(), 45);
+            dc.clearRect(vpdecoder.x, vpdecoder.y + (1 - tick.progress())* vpdecoder.h, vpdecoder.w-4, vpdecoder.h *(tick.progress()));
         }
         if (tick.glitch()) glitch();
         if ((tick.glitch2())&&(tick.c%4 != 0)) glitch();
@@ -689,6 +760,7 @@ window.addEventListener('load', function() {
         if (!mouse.down) {
             vpstat.moveMouse(mouse.x, mouse.y);
             vpdat.moveMouse(mouse.x, mouse.y);
+            vpdecoder.moveMouse(mouse.x, mouse.y);
         } else {
             vpstat.dragMouse(mouse.x, mouse.y);
         }
