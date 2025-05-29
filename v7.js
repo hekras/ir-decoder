@@ -101,6 +101,7 @@ class Dot {
         this.vel = vel;
         this.maxSpeed = maxSpeed;
         this.counter = 50 + 100 * Math.random();
+        this.color = "rgba(250, 250, 250, 0.5)";
     }
 
     update() {
@@ -109,8 +110,18 @@ class Dot {
     }
 
     show(dc) {
+        dc.fillStyle = this.color;
         dc.beginPath();
         let r = this.counter / 10;
+        r = (r < 0) ? 0 : r;
+        dc.arc(this.pos.x, this.pos.y, r, 0, 2 * Math.PI);
+        dc.fill();
+    }
+
+    showProgress(dc, factor) {
+        dc.fillStyle = this.color;
+        dc.beginPath();
+        let r = factor * this.counter / 10;
         r = (r < 0) ? 0 : r;
         dc.arc(this.pos.x, this.pos.y, r, 0, 2 * Math.PI);
         dc.fill();
@@ -605,16 +616,21 @@ class PViewportData {
 // Tick class
 // ======================================================
 const sequence = [
-    { tick: 1, cls: 1, DataIndex: 0},
-    { tick: 100, cls: 1, vpdat: 1, vpdatProgress: 1, subtitle: "Welecome to Logic Analyzer Demo"},
-    { tick: 200, cls: 1, vpdat: 1, vpstat: 1, vpstatProgress: 1},
-    { tick: 300, cls: 1, vpdat: 1, vpstat: 1, vpdecoder: 1, vpdecoderProgress: 1},
-    { tick: 400, cls: 1, vpdat: 1, vpstat: 1, vpdecoder: 1},
-    { tick: 450, vpdat: 1, vpstat: 1, vpdecoder: 1, glitch2: 1},
-    { tick: 500, cls: 1, vpdat: 1, vpstat: 1, vpdecoder: 1},
-    { tick: 501, DataIndex: 1},
-    { tick: 700, cls: 1, vpdat: 1, vpdatProgress: 1, subtitle: "CR!SP"},
-//    { tick: 250, glitch: 1},
+    { tick: 1, cls:1, particleInit: 1},
+    { tick: 500, cls:1, particleIntro: 1, subtitle: "Intro..."},
+    { tick: 1000, cls:1, particle: 1, subtitle: "Loading..."},
+    { tick: 1250, cls:1, particleOutro: 1, subtitle: "Outro..."},
+/*    { tick: 601, cls: 1, DataIndex: 0},
+    { tick: 700, cls: 1, vpdat: 1, vpdatProgress: 1, subtitle: "Wellcome to Logic Analyzer Demo"},
+    { tick: 800, cls: 1, vpdat: 1, vpstat: 1, vpstatProgress: 1},
+    { tick: 900, cls: 1, vpdat: 1, vpstat: 1, vpdecoder: 1, vpdecoderProgress: 1},
+    { tick: 1000, cls: 1, vpdat: 1, vpstat: 1, vpdecoder: 1},
+    { tick: 1050, vpdat: 1, vpstat: 1, vpdecoder: 1, glitch2: 1},
+    { tick: 1100, cls: 1, vpdat: 1, vpstat: 1, vpdecoder: 1},
+    { tick: 1101, DataIndex: 1},
+    { tick: 1300, cls: 1, vpdat: 1, vpdatProgress: 1, subtitle: "CR!SP"},
+*/
+    //    { tick: 250, glitch: 1},
 ];
 
 class PTick{
@@ -687,6 +703,15 @@ class PTick{
     getDataIndex() {
         return this.seq[this.pc].DataIndex || 0;
     }
+    particleIntro() {
+        return (this.seq[this.pc].particleIntro != undefined);
+    }
+    particleInit() {
+        return (this.seq[this.pc].particleInit != undefined);
+    }
+    particleOutro() {
+        return (this.seq[this.pc].particleOutro != undefined);
+    }
 }
 
 // ======================================================
@@ -757,8 +782,23 @@ window.addEventListener('load', function() {
         if (tick.glitch()) glitch();
         if ((tick.glitch2())&&(tick.c%4 != 0)) glitch();
         if ((tick.glitch2())&&(tick.c%4 == 0)) { dc.clearRect(0,0,canvas.width,canvas.height); vpdat.render(dc, vpstat.hover3); vpstat.render(dc); };
+        if (tick.particleIntro()) {
+            dots.push(new Dot(width / 2 + 0.4 * width * Math.cos(angle), height / 2 + 0.4 * height * Math.sin(angle), PVector.direction(angle2+Math.random()), 2));
+            dots.push(new Dot(width / 2 + 0.4 * width * Math.cos(angle), height / 2 + 0.4 * height * Math.sin(angle), PVector.direction(angle2+Math.random()), 2));
+            for (let i = 0; i < dots.length; i++) {
+                dots[i].update();
+                dots[i].showProgress(dc, 1-tick.progress());
+                if (dots[i].pos.x > width || dots[i].pos.x < 0 || dots[i].pos.y > height || dots[i].pos.y < 0|| dots[i].counter < 0) {
+                    dots[i].pos.set(width / 2 + 0.4 * width * Math.cos(angle), height / 2 + 0.4 * height * Math.sin(angle));
+                    dots[i].vel = PVector.direction(angle2+Math.random());
+                    angle2 += 0.01;
+                    dots[i].counter = 50 + 100 * Math.random();
+                    dots[i].color = "rgba(255, 255, 255, 0.5)";
+                }
+            }
+            angle += 0.01;
+        }
         if (tick.particle()) {
-            dc.fillStyle = "rgba(255,255,255,1.0)";
             for (let i = 0; i < dots.length; i++) {
                 dots[i].update();
                 dots[i].show(dc);
@@ -767,11 +807,28 @@ window.addEventListener('load', function() {
                     dots[i].vel = PVector.direction(angle2+Math.random());
                     angle2 += 0.01;
                     dots[i].counter = 50 + 100 * Math.random();
+                    dots[i].color = "rgba(255, 255, 255, 0.5)";
                 }
             }
             angle += 0.01;
         }
-
+        if (tick.particleOutro()) {
+            for (let i = 0; i < dots.length; i++) {
+                dots[i].update();
+                dots[i].showProgress(dc, tick.progress());
+                if (dots[i].pos.x > width || dots[i].pos.x < 0 || dots[i].pos.y > height || dots[i].pos.y < 0|| dots[i].counter < 0) {
+                    dots[i].pos.set(width / 2 + 0.4 * width * Math.cos(angle), height / 2 + 0.4 * height * Math.sin(angle));
+                    dots[i].vel = PVector.direction(angle2+Math.random());
+                    angle2 += 0.01;
+                    dots[i].counter = 50 + 100 * Math.random();
+                    dots[i].color = "rgba(255, 255, 255, 0.5)";
+                }
+            }
+            angle += 0.01;
+        }
+        if (tick.particleInit()) {
+            dots = [];
+        }
         tick.t();
         requestAnimationFrame(animate);
     }
