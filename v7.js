@@ -605,12 +605,15 @@ class PViewportData {
 // Tick class
 // ======================================================
 const sequence = [
-    { tick: 100, cls: 1, vpdat: 1, vpdatProgress: 1, vpdecoder: 1},
+    { tick: 1, cls: 1, DataIndex: 0},
+    { tick: 100, cls: 1, vpdat: 1, vpdatProgress: 1, subtitle: "Welecome to Logic Analyzer Demo"},
     { tick: 200, cls: 1, vpdat: 1, vpstat: 1, vpstatProgress: 1},
     { tick: 300, cls: 1, vpdat: 1, vpstat: 1, vpdecoder: 1, vpdecoderProgress: 1},
     { tick: 400, cls: 1, vpdat: 1, vpstat: 1, vpdecoder: 1},
     { tick: 450, vpdat: 1, vpstat: 1, vpdecoder: 1, glitch2: 1},
     { tick: 500, cls: 1, vpdat: 1, vpstat: 1, vpdecoder: 1},
+    { tick: 501, DataIndex: 1},
+    { tick: 700, cls: 1, vpdat: 1, vpdatProgress: 1, subtitle: "CR!SP"},
 //    { tick: 250, glitch: 1},
 ];
 
@@ -672,6 +675,18 @@ class PTick{
     vpdecoderProgress(){
         return (this.seq[this.pc].vpdecoderProgress != undefined);
     }
+    subtitle(){
+        return (this.seq[this.pc].subtitle != undefined);
+    }
+    getSubtitle() {
+        return this.seq[this.pc].subtitle || "";
+    }
+    setDataIndex() {
+        return (this.seq[this.pc].DataIndex != undefined);
+    }
+    getDataIndex() {
+        return this.seq[this.pc].DataIndex || 0;
+    }
 }
 
 // ======================================================
@@ -682,13 +697,14 @@ window.addEventListener('load', function() {
     canvas.style.backgroundColor = "black";
     const width = canvas.width = window.innerWidth - 10;
     const height = canvas.height = window.innerHeight - 10;
-    const vpdat = new PViewportData(30, 50, width-60, 200);
-    vpdat.setData(data0);
+    let vpdat = new PViewportData(30, 50, width-60, 200);
+    vpdat.setData(dataASSEMBLY_25);
 
-    const vpstat = new PViewportStatistic(30, 300, width-60, 200, vpdat);
+    let vpstat = new PViewportStatistic(30, 300, width-60, 200, vpdat);
     vpstat.calculate();
 
-    const vpdecoder = new PViewportDecoder(30, 580, width-60, 300, vpdat);
+    let vpdecoder = new PViewportDecoder(30, 580, width-60, height-580
+        , vpdat);
     vpdecoder.decodeData();
 
     let dots = [];
@@ -709,6 +725,13 @@ window.addEventListener('load', function() {
     const tick = new PTick();
     
     function animate() {
+        if (tick.setDataIndex()) {
+            vpdat.setData(capturequeue[tick.getDataIndex()]);
+            vpstat = new PViewportStatistic(30, 300, width-60, 200, vpdat);
+            vpstat.calculate();
+            vpdecoder = new PViewportDecoder(30, 580, width-60, height-580, vpdat);
+            vpdecoder.decodeData();
+        }
         if (tick.cls()) dc.clearRect(0,0,canvas.width,canvas.height);
         if (tick.vpdat()) vpdat.render(dc, vpstat.hover3);
         if (tick.vpstat()) vpstat.render(dc);
@@ -722,6 +745,14 @@ window.addEventListener('load', function() {
         if (tick.vpdecoderProgress()){
             dc.clearRect(vpdat.x+2 + vpdat.w *(1-tick.progress())-4, vpdat.y+vpdat.h-48, vpdat.w * tick.progress(), 45);
             dc.clearRect(vpdecoder.x, vpdecoder.y + (1 - tick.progress())* vpdecoder.h, vpdecoder.w-4, vpdecoder.h *(tick.progress()));
+        }
+        if (tick.subtitle()) {
+            dc.fillStyle = "gray";
+            dc.font = "40px Arial";
+            const xsize = dc.measureText(tick.getSubtitle()).width;
+            dc.fillRect((width-xsize)/2, height-80, xsize+50, 50);
+            dc.fillStyle = "white";
+            dc.fillText(tick.getSubtitle(), (width-xsize)/2 + 25, height-40);
         }
         if (tick.glitch()) glitch();
         if ((tick.glitch2())&&(tick.c%4 != 0)) glitch();
