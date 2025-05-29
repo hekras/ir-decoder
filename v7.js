@@ -743,8 +743,9 @@ const sequence = [
     { tick: 3550, cls: 1, vpdat: 1, vpstat: 1, vpdecoder: 1},
     { tick: 3600, vpdat: 1, vpstat: 1, vpdecoder: 1, glitch2: 1},
     { tick: 3630, noise: 1 , subtitle: "Noise..."},
-    { tick: 3630, resetScroller2: 1},
+    { tick: 3630, resetScrollers: 1},
     { tick: 6000, scrollerDemo2: 1, subtitle: "Scroller..."},
+    { tick: 6200, noise: 1 , subtitle: "Noise..."},
 
     //    { tick: 250, glitch: 1},
 ];
@@ -837,8 +838,8 @@ class PTick{
     scrollerDemo2() {
         return (this.seq[this.pc].scrollerDemo2 != undefined);
     }  
-    resetScroller2() {
-        return (this.seq[this.pc].resetScroller2 != undefined);
+    resetScrollers() {
+        return (this.seq[this.pc].resetScrollers != undefined);
     }
     scrollerGlitch() {
         return (this.seq[this.pc].scrollerGlitch != undefined);
@@ -919,8 +920,9 @@ window.addEventListener('load', function() {
     const tick = new PTick();
     
     function animate() {
-        if (tick.resetScroller2()) {
+        if (tick.resetScrollers()) {
             scroller2.x = scroller2.x0 = scroller2.path.length;
+            scroller.x = scroller.x0 = scroller.path.length;
         }
         if (tick.CRSPInit()) {
             maskdc.clearRect(0, 0, mask.width, mask.height);
@@ -1006,7 +1008,7 @@ window.addEventListener('load', function() {
             dc.fillRect(0,0,canvas.width,canvas.height);
 
             dc.strokeStyle = "cyan";
-            dc.lineWidth = 40;
+            dc.lineWidth = 240 + 200 * Math.sin(angle3);
             dc.beginPath();
             const l = width;
             const cx = width/2 + 0.4 * width * Math.cos(angle3*2);
@@ -1039,7 +1041,7 @@ window.addEventListener('load', function() {
             dc.fillRect(0,0,canvas.width,canvas.height);
 
             dc.strokeStyle = "cyan";
-            dc.lineWidth = 40;
+            dc.lineWidth = 240 + 200 * Math.sin(angle3);
             dc.beginPath();
             const l = width;
             const cx = width/2 + 0.4 * width * Math.cos(angle3*2);
@@ -1069,7 +1071,7 @@ window.addEventListener('load', function() {
             dc.fillRect(0,0,canvas.width,canvas.height);
 
             dc.strokeStyle = "cyan";
-            dc.lineWidth = 40;
+            dc.lineWidth = 240 + 200 * Math.sin(angle3);
             dc.beginPath();
             const l = width;
             const cx = width/2 + 0.4 * width * Math.cos(angle3*2);
