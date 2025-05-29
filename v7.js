@@ -726,10 +726,6 @@ class Scroller{
 const sequence = [
     { tick: 5, cls: 1},
     { tick: 5, particleInit: 1, CRSPInit: 1},
-//    { tick: 500, scrollerInit: 1, subtitle: "Demo..."},
-//    { tick: 1000, scrollerDemo: 1, subtitle: "Demo..."},
-//    { tick: 1500, scrollerGlitch: 1, subtitle: "Glitch..."},
-
     { tick: 500, cls:1, particleIntro: 1, subtitle: "Intro..."},
     { tick: 1000, cls:1, particle: 1, subtitle: "Loading..."},
     { tick: 1250, cls:1, particleOutro: 1, subtitle: "Outro..."},
@@ -738,14 +734,17 @@ const sequence = [
     { tick: 2730, scrollerGlitch: 1, subtitle: "Glitch!"},
     { tick: 2760, scrollerDemo: 1, subtitle: "Scroller..."},
     { tick: 2790, scrollerGlitch: 1, subtitle: "Glitch!"},
-    { tick: 3000, scrollerDemo: 1, subtitle: "Scroller..."},
+    { tick: 2900, scrollerDemo: 1, subtitle: "Scroller..."},
+    { tick: 3000, scrollerGlitch: 1, subtitle: "Glitch!"},
     { tick: 3000, DataIndex: 1},
-    { tick: 3500, cls: 1, vpdat: 1, vpdatProgress: 1, subtitle: "Wellcome to Logic Analyzer Demo"},
-    { tick: 4000, cls: 1, vpdat: 1, vpstat: 1, vpstatProgress: 1},
-    { tick: 4500, cls: 1, vpdat: 1, vpstat: 1, vpdecoder: 1, vpdecoderProgress: 1},
-    { tick: 5000, cls: 1, vpdat: 1, vpstat: 1, vpdecoder: 1},
-    { tick: 5100, vpdat: 1, vpstat: 1, vpdecoder: 1, glitch2: 1},
-    { tick: 8000, scrollerDemo2: 1, subtitle: "Scroller..."},
+    { tick: 3150, cls: 1, vpdat: 1, vpdatProgress: 1, subtitle: "Wellcome to Logic Analyzer Demo"},
+    { tick: 3300, cls: 1, vpdat: 1, vpstat: 1, vpstatProgress: 1},
+    { tick: 3450, cls: 1, vpdat: 1, vpstat: 1, vpdecoder: 1, vpdecoderProgress: 1},
+    { tick: 3550, cls: 1, vpdat: 1, vpstat: 1, vpdecoder: 1},
+    { tick: 3600, vpdat: 1, vpstat: 1, vpdecoder: 1, glitch2: 1},
+    { tick: 3630, noise: 1 , subtitle: "Noise..."},
+    { tick: 3630, resetScroller2: 1},
+    { tick: 6000, scrollerDemo2: 1, subtitle: "Scroller..."},
 
     //    { tick: 250, glitch: 1},
 ];
@@ -838,11 +837,17 @@ class PTick{
     scrollerDemo2() {
         return (this.seq[this.pc].scrollerDemo2 != undefined);
     }  
+    resetScroller2() {
+        return (this.seq[this.pc].resetScroller2 != undefined);
+    }
     scrollerGlitch() {
         return (this.seq[this.pc].scrollerGlitch != undefined);
     }
     CRSPInit() {
         return (this.seq[this.pc].CRSPInit != undefined);
+    } 
+    noise() {
+        return (this.seq[this.pc].noise != undefined);
     } 
 }
 
@@ -852,7 +857,7 @@ window.addEventListener('load', function() {
     // canvas setup
     const canvas = document.querySelector("canvas");
     const scrollText = "Så for 5 dage siden var jeg i DR byen og opleve Svend Brinkmann og Thomas Vinterberg sidde ved kaminen og snakke om hvordan vi kan leve med kriser. De tog udgangspunkt i nutiden og Donald Trumps behandling af Zelenskyj. Thomas fortalte hvordan han var stoppet med at se nyheder, noget som jeg kender fra mig selv og flere i min omgangskreds. Svend havde gjort det modsatte og læser flere nyheder end tidligere. Budskabet fra de to var at man skulle prøve at finde håbet og dyrke fællesskabet og kunsten. Jeg vil ikke sige at jeg blev frelst, men jeg indså at jeg finder håbet i de ting de nævner. Dog synes jeg at der manglede forholdet til naturen. Sammen med fællesskabet og kunsten er der også naturen, som giver plads til refleksion og fordybelse både derude og i vindueskarmen.";
-    const scrollText2 = ".... WE ARE Back .... Some finish greetings to friends and all the other people who are reading this. I hope you are all doing well and enjoying the demo. This is a test of the scrolling text functionality. The text should scroll smoothly across the screen, providing a nice visual effect. Let's see how it goes!";
+    const scrollText2 = ".... WE ARE BACK  .... Some finish greetings to friends and all the other people who are reading this. I hope you are all doing well and enjoying the demo. This is a test of the scrolling text functionality. The text should scroll smoothly across the screen, providing a nice visual effect. Let's see how it goes!";
     const crisptext = "CR!SP";
 
     canvas.style.backgroundColor = "black";
@@ -901,8 +906,8 @@ window.addEventListener('load', function() {
         willReadFrequently: true
     });
 
-    var scroller = new Scroller(scrollText, "100px Russo One", dc, width, width, height/2, height, -5, 0, "white");
-    var scroller2 = new Scroller(scrollText2, "100px Russo One", dc, width, width, height/2, height, -5, 0, "white");
+    var scroller = new Scroller(scrollText, "100px Russo One", dc, width, width, height/2, height, -8, 0, "white");
+    var scroller2 = new Scroller(scrollText2, "100px Russo One", dc, width, width, height/2, height, -10, 0, "white");
 
     canvas.oncontextmenu = function (e) {
         e.preventDefault();
@@ -914,6 +919,9 @@ window.addEventListener('load', function() {
     const tick = new PTick();
     
     function animate() {
+        if (tick.resetScroller2()) {
+            scroller2.x = scroller2.x0 = scroller2.path.length;
+        }
         if (tick.CRSPInit()) {
             maskdc.clearRect(0, 0, mask.width, mask.height);
             maskdc.fillStyle = "rgba(0,0,0,0.6)";
@@ -1088,6 +1096,8 @@ window.addEventListener('load', function() {
         }
         if (tick.scrollerGlitch()) {
             glitch();
+//            drawNoise(dc, width, height, 40);
+            drawPixelate(dc, canvas, 16);
             scroller.update();
         }
         if (tick.particleInit()) {
@@ -1100,6 +1110,10 @@ window.addEventListener('load', function() {
             dc.fillRect((width-xsize)/2, height-80, xsize+50, 50);
             dc.fillStyle = "white";
             dc.fillText(tick.getSubtitle(), (width-xsize)/2 + 25, height-40);
+        }
+        if (tick.noise()) {
+            drawNoise(dc, width, height, 40);
+            drawPixelate(dc, canvas, 20);
         }
         angle3 += 0.01;
         tick.t();
@@ -1137,16 +1151,44 @@ window.addEventListener('load', function() {
       
       function glitch() {
 
-        const sliceCount = 10;
+        const sliceCount = 20;
         for (let i = 0; i < sliceCount; i++) {
           const x = 0;
           const y = Math.random() * canvas.height;
           const width = canvas.width;
           const height = Math.random() * 10 + 5;
       
-          const dx = Math.random() * 20 - 10; // horizontal shift
+          const dx = Math.random() * 50 - 25; // horizontal shift
           const imageData = dc.getImageData(x, y, width, height);
           dc.putImageData(imageData, dx, y);
         }
       }
+
+    function drawNoise(dc, width, height, alpha = 40) {
+        const imageData = dc.createImageData(width, height);
+        const buffer = imageData.data;
+        for (let i = 0; i < buffer.length; i += 4) {
+            const val = (64 * Math.floor(Math.random() * 4)); 
+            buffer[i] = val;     // R
+            buffer[i + 1] = val; // G
+            buffer[i + 2] = val; // B
+            buffer[i + 3] = 255; // Alpha (0-255)
+        }
+        dc.putImageData(imageData, 0, 0);
+    }
+
+    function drawPixelate(dc, canvas, pixelSize = 8) {
+        const off = document.createElement('canvas');
+        off.width = Math.ceil(canvas.width / pixelSize);
+        off.height = Math.ceil(canvas.height / pixelSize);
+        const offCtx = off.getContext('2d');
+        offCtx.drawImage(canvas, 0, 0, off.width, off.height);
+        dc.imageSmoothingEnabled = false;
+        dc.drawImage(off, 0, 0, off.width, off.height, 0, 0, canvas.width, canvas.height);
+        dc.imageSmoothingEnabled = true;
+    }
+
+
+
+
 });
