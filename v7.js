@@ -16,7 +16,7 @@ const dataASSEMBLY_25 = [{"x":0,"y":0},{"x":1508,"y":1},{"x":2133,"y":0},{"x":23
 const dataNOISE = [{"x":0,"y":0},{"x":1080,"y":1},{"x":1704,"y":0},{"x":2362,"y":1},{"x":3412,"y":0},{"x":3668,"y":1},{"x":4266,"y":0},{"x":4522,"y":1},{"x":5120,"y":0},{"x":5804,"y":1},{"x":6827,"y":0},{"x":7083,"y":1},{"x":7681,"y":0},{"x":8339,"y":1},{"x":8962,"y":0},{"x":9191,"y":1},{"x":9815,"y":0},{"x":10045,"y":1},{"x":11097,"y":0},{"x":11326,"y":1},{"x":13038,"y":0},{"x":14149,"y":1},{"x":14746,"y":0},{"x":15429,"y":1},{"x":16027,"y":0},{"x":16280,"y":1},{"x":16881,"y":0},{"x":17135,"y":1},{"x":18162,"y":0},{"x":18844,"y":1},{"x":19870,"y":0},{"x":20098,"y":1},{"x":20724,"y":0},{"x":21404,"y":1},{"x":22004,"y":0},{"x":22261,"y":1},{"x":22857,"y":0},{"x":23086,"y":1},{"x":23712,"y":0},{"x":23967,"y":1},{"x":26107,"y":0},{"x":27216,"y":1},{"x":27815,"y":0},{"x":28495,"y":1},{"x":29523,"y":0},{"x":29778,"y":1},{"x":30377,"y":0},{"x":30634,"y":1},{"x":31230,"y":0},{"x":31913,"y":1},{"x":32939,"y":0},{"x":33168,"y":1},{"x":33793,"y":0},{"x":34476,"y":1},{"x":35500,"y":0},{"x":35753,"y":1},{"x":36354,"y":0},{"x":37034,"y":1},{"x":39154,"y":0},{"x":40266,"y":1},{"x":40861,"y":0},{"x":41117,"y":1},{"x":41715,"y":0},{"x":42401,"y":1},{"x":43423,"y":0},{"x":43679,"y":1},{"x":44277,"y":0},{"x":44961,"y":1},{"x":45985,"y":0},{"x":46670,"y":1},{"x":47694,"y":0},{"x":47976,"y":1},{"x":48547,"y":0},{"x":49233,"y":1},{"x":49827,"y":0},{"x":50085,"y":1},{"x":52196,"y":0},{"x":53762,"y":1},{"x":54759,"y":0},{"x":55444,"y":1},{"x":56039,"y":0},{"x":56298,"y":1},{"x":57320,"y":0},{"x":58006,"y":1},{"x":59028,"y":0},{"x":59312,"y":1},{"x":59882,"y":0},{"x":60140,"y":1},{"x":60736,"y":0},{"x":61423,"y":1},{"x":62443,"y":0},{"x":63127,"y":1},{"x":65241,"y":0},{"x":66354,"y":1},{"x":66949,"y":0},{"x":67659,"y":1},{"x":68229,"y":0},{"x":68488,"y":1},{"x":69510,"y":0},{"x":69767,"y":1},{"x":70364,"y":0},{"x":70623,"y":1},{"x":71217,"y":0},{"x":71475,"y":1},{"x":72072,"y":0},{"x":72354,"y":1},{"x":72926,"y":0},{"x":73183,"y":1},{"x":73780,"y":0},{"x":74489,"y":1},{"x":75486,"y":0},{"x":75744,"y":1},{"x":76341,"y":0},{"x":76597,"y":1}]
 const rawdata = [{"x":0,"y":0},{"x":1532,"y":1},{"x":2133,"y":0},{"x":2363,"y":1},{"x":3414,"y":0},{"x":4096,"y":1},{"x":5121,"y":0},{"x":5802,"y":1},{"x":6829,"y":0},{"x":7083,"y":1},{"x":7683,"y":0},{"x":7936,"y":1},{"x":8536,"y":0},{"x":8791,"y":1},{"x":9390,"y":0},{"x":9621,"y":1},{"x":10244,"y":0},{"x":10901,"y":1},{"x":13045,"y":0},{"x":14153,"y":1},{"x":14754,"y":0},{"x":15435,"y":1},{"x":16034,"y":0},{"x":16289,"y":1},{"x":17315,"y":0},{"x":17572,"y":1},{"x":18169,"y":0},{"x":18407,"y":1},{"x":19019,"y":0},{"x":19275,"y":1},{"x":19877,"y":0},{"x":20107,"y":1},{"x":20730,"y":0},{"x":20960,"y":1},{"x":21584,"y":0},{"x":22268,"y":1},{"x":23291,"y":0},{"x":23547,"y":1},{"x":24145,"y":0},{"x":24375,"y":1}]
 
-const capturequeue = [data0, data3, dataASSEMBLY_25, rawdata, dataOLDHANDMIXER, dataNOISE];
+const capturequeue = [data0, dataCRSP, data3, dataASSEMBLY_25, rawdata, dataOLDHANDMIXER, dataNOISE];
 let captureindex = 0;
 
 
@@ -739,16 +739,14 @@ const sequence = [
     { tick: 2760, scrollerDemo: 1, subtitle: "Scroller..."},
     { tick: 2790, scrollerGlitch: 1, subtitle: "Glitch!"},
     { tick: 3000, scrollerDemo: 1, subtitle: "Scroller..."},
-/*    { tick: 601, cls: 1, DataIndex: 0},
-    { tick: 700, cls: 1, vpdat: 1, vpdatProgress: 1, subtitle: "Wellcome to Logic Analyzer Demo"},
-    { tick: 800, cls: 1, vpdat: 1, vpstat: 1, vpstatProgress: 1},
-    { tick: 900, cls: 1, vpdat: 1, vpstat: 1, vpdecoder: 1, vpdecoderProgress: 1},
-    { tick: 1000, cls: 1, vpdat: 1, vpstat: 1, vpdecoder: 1},
-    { tick: 1050, vpdat: 1, vpstat: 1, vpdecoder: 1, glitch2: 1},
-    { tick: 1100, cls: 1, vpdat: 1, vpstat: 1, vpdecoder: 1},
-    { tick: 1101, DataIndex: 1},
-    { tick: 1300, cls: 1, vpdat: 1, vpdatProgress: 1, subtitle: "CR!SP"},
-*/
+    { tick: 3000, DataIndex: 1},
+    { tick: 3500, cls: 1, vpdat: 1, vpdatProgress: 1, subtitle: "Wellcome to Logic Analyzer Demo"},
+    { tick: 4000, cls: 1, vpdat: 1, vpstat: 1, vpstatProgress: 1},
+    { tick: 4500, cls: 1, vpdat: 1, vpstat: 1, vpdecoder: 1, vpdecoderProgress: 1},
+    { tick: 5000, cls: 1, vpdat: 1, vpstat: 1, vpdecoder: 1},
+    { tick: 5100, vpdat: 1, vpstat: 1, vpdecoder: 1, glitch2: 1},
+    { tick: 8000, scrollerDemo2: 1, subtitle: "Scroller..."},
+
     //    { tick: 250, glitch: 1},
 ];
 
@@ -837,6 +835,9 @@ class PTick{
     scrollerDemo() {
         return (this.seq[this.pc].scrollerDemo != undefined);
     }  
+    scrollerDemo2() {
+        return (this.seq[this.pc].scrollerDemo2 != undefined);
+    }  
     scrollerGlitch() {
         return (this.seq[this.pc].scrollerGlitch != undefined);
     }
@@ -851,6 +852,7 @@ window.addEventListener('load', function() {
     // canvas setup
     const canvas = document.querySelector("canvas");
     const scrollText = "Så for 5 dage siden var jeg i DR byen og opleve Svend Brinkmann og Thomas Vinterberg sidde ved kaminen og snakke om hvordan vi kan leve med kriser. De tog udgangspunkt i nutiden og Donald Trumps behandling af Zelenskyj. Thomas fortalte hvordan han var stoppet med at se nyheder, noget som jeg kender fra mig selv og flere i min omgangskreds. Svend havde gjort det modsatte og læser flere nyheder end tidligere. Budskabet fra de to var at man skulle prøve at finde håbet og dyrke fællesskabet og kunsten. Jeg vil ikke sige at jeg blev frelst, men jeg indså at jeg finder håbet i de ting de nævner. Dog synes jeg at der manglede forholdet til naturen. Sammen med fællesskabet og kunsten er der også naturen, som giver plads til refleksion og fordybelse både derude og i vindueskarmen.";
+    const scrollText2 = ".... WE ARE Back .... Some finish greetings to friends and all the other people who are reading this. I hope you are all doing well and enjoying the demo. This is a test of the scrolling text functionality. The text should scroll smoothly across the screen, providing a nice visual effect. Let's see how it goes!";
     const crisptext = "CR!SP";
 
     canvas.style.backgroundColor = "black";
@@ -900,6 +902,7 @@ window.addEventListener('load', function() {
     });
 
     var scroller = new Scroller(scrollText, "100px Russo One", dc, width, width, height/2, height, -5, 0, "white");
+    var scroller2 = new Scroller(scrollText2, "100px Russo One", dc, width, width, height/2, height, -5, 0, "white");
 
     canvas.oncontextmenu = function (e) {
         e.preventDefault();
@@ -1050,6 +1053,36 @@ window.addEventListener('load', function() {
             scrollerdc.globalCompositeOperation = "source-over";
             dc.drawImage(scrollermask, 0, 0);
             scroller.update();
+    
+            dc.drawImage(mask, xoff, yoff);
+        }
+        if (tick.scrollerDemo2()) {
+            dc.fillStyle = "red";
+            dc.fillRect(0,0,canvas.width,canvas.height);
+
+            dc.strokeStyle = "cyan";
+            dc.lineWidth = 40;
+            dc.beginPath();
+            const l = width;
+            const cx = width/2 + 0.4 * width * Math.cos(angle3*2);
+            const cy = height/2 + 0.4 * height * Math.sin(angle3);
+            dc.moveTo(cx, cy);
+            dc.lineTo(cx + l * Math.cos(angle3), cy + l * Math.sin(angle3));
+            dc.moveTo(cx, cy);
+            dc.lineTo(cx - l * Math.cos(angle3), cy - l * Math.sin(angle3));
+            dc.stroke();
+
+    //        statemachine.update(dc);
+            const xoff = mask.width*0.10*Math.cos(angle3/2) - mask.width*0.1;
+            const yoff = mask.height*0.10*Math.sin(angle3/2) - mask.height*0.1;
+            scrollerdc.clearRect(0,0,width,height);
+            scrollerdc.fillStyle = "rgba(0,0,0,0.4)";
+            scrollerdc.fillRect(0,0,width,height);
+            scrollerdc.globalCompositeOperation = "destination-out";
+            scroller2.draw(scrollerdc);
+            scrollerdc.globalCompositeOperation = "source-over";
+            dc.drawImage(scrollermask, 0, 0);
+            scroller2.update();
     
             dc.drawImage(mask, xoff, yoff);
         }
