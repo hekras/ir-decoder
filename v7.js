@@ -613,13 +613,132 @@ class PViewportData {
 }
 
 // ======================================================
+// ScrollerChar and Path classes
+// ======================================================
+class ScrollerChar{
+    constructor(char, xoffset, width){
+        this.char = char;
+        this.xoffset = xoffset;
+        this.width = width; 
+    }
+}
+
+class Path{
+    constructor(x, y, ang, color){
+        this.x = x;
+        this.y = y;
+        this.ang = ang;
+        this.color = color;
+    }
+    draw(dc){
+        dc.fillStyle = this.color;
+        dc.fillRect(this.x, this.y, 5, 5);
+    }
+}
+
+// ======================================================
+// Scroller class
+// ======================================================
+class Scroller{
+    constructor(text, font, dc, x, width, y, height, dx, dy, color){
+        this.text = text;
+        this.font = font;
+        this.width = width;
+        this.x = x;
+        this.x0 = x;
+        dc.font = font;
+        const temp = text.split("");
+        this.chars = [];
+        let xoffset = 0;
+        dc.font = this.font;
+        for (let i = 0; i < temp.length; i++) {
+            this.chars.push(new ScrollerChar(temp[i], xoffset, dc.measureText(temp[i]).width));
+            xoffset += dc.measureText(temp[i]).width;
+        }
+        this.xmax = xoffset + width;
+        this.y = y;
+        this.dx = dx;
+        this.dy = dy;
+        this.color = color;
+        this.ticks = 0;
+        this.path = [];
+        for (let i = 0; i < this.width; i++) {
+            let x = i - width*0.25;
+            this.path.push(new Path(x, height*0.8, 0, color));
+        }
+        let x0 = width*0.75;
+        let y0 = height*(0.5+0.15);
+        for (let a = -Math.PI/2; a < Math.PI/2; a+=0.005) {
+            let x = x0 + 0.15*height*Math.cos(a);
+            let y = y0 - 0.15*height*Math.sin(a);
+            this.path.push(new Path(x, y, -Math.PI/2 - a, "orange"));
+        }
+        for (let i = width*0.75; i > width*0.25; i--) {
+            this.path.push(new Path(i, height*0.5, Math.PI,color));
+        }
+        x0 = width*0.25;
+        y0 = height*(0.5-0.15);
+        for (let a = 1.5*Math.PI; a > 0.5*Math.PI; a-=0.005) {
+            let x = x0 + 0.15*height*Math.cos(a);
+            let y = y0 - 0.15*height*Math.sin(a);
+            this.path.push(new Path(x, y, 0.5*Math.PI - a, "brown"));
+        }
+        for (let i = 0; i < this.width; i++) {
+            let x = i + width*0.25;
+            this.path.push(new Path(x, height*0.2, 0, "white"));
+        }
+        this.x = this.x0 = this.path.length;
+        this.xmax = xoffset + this.path.length;
+        
+    }
+    draw(dc){
+        var x = this.x;
+        dc.fillStyle = this.color;
+        dc.font = this.font;
+
+        this.chars.forEach(element => {
+            if ((x > 0)&&(x < this.path.length)){
+                const i = Math.floor(x);    
+                const xx = this.path[i].x;
+                const yy = this.path[i].y + 50*Math.sin(x/100 - this.ticks/25);
+                dc.save();
+                dc.translate(xx, yy);
+                dc.rotate(this.path[i].ang);
+                dc.fillText(element.char, 0, 0);
+                dc.restore();
+            }
+            x += element.width;
+        });
+    }
+    update(){
+        this.ticks++;
+        this.x += this.dx;
+        this.y += this.dy;
+        if (this.x < -this.xmax) this.x = this.x0;
+    }
+}
+
+
+
+// ======================================================
 // Tick class
 // ======================================================
 const sequence = [
-    { tick: 1, cls:1, particleInit: 1},
+    { tick: 5, cls: 1},
+    { tick: 5, particleInit: 1, CRSPInit: 1},
+//    { tick: 500, scrollerInit: 1, subtitle: "Demo..."},
+//    { tick: 1000, scrollerDemo: 1, subtitle: "Demo..."},
+//    { tick: 1500, scrollerGlitch: 1, subtitle: "Glitch..."},
+
     { tick: 500, cls:1, particleIntro: 1, subtitle: "Intro..."},
     { tick: 1000, cls:1, particle: 1, subtitle: "Loading..."},
     { tick: 1250, cls:1, particleOutro: 1, subtitle: "Outro..."},
+    { tick: 1700, scrollerInit: 1, subtitle: "Scroller Fade in"},
+    { tick: 2700, scrollerDemo: 1, subtitle: "Scroller..."},
+    { tick: 2730, scrollerGlitch: 1, subtitle: "Glitch!"},
+    { tick: 2760, scrollerDemo: 1, subtitle: "Scroller..."},
+    { tick: 2790, scrollerGlitch: 1, subtitle: "Glitch!"},
+    { tick: 3000, scrollerDemo: 1, subtitle: "Scroller..."},
 /*    { tick: 601, cls: 1, DataIndex: 0},
     { tick: 700, cls: 1, vpdat: 1, vpdatProgress: 1, subtitle: "Wellcome to Logic Analyzer Demo"},
     { tick: 800, cls: 1, vpdat: 1, vpstat: 1, vpstatProgress: 1},
@@ -712,6 +831,18 @@ class PTick{
     particleOutro() {
         return (this.seq[this.pc].particleOutro != undefined);
     }
+    scrollerInit() {
+        return (this.seq[this.pc].scrollerInit != undefined);
+    }
+    scrollerDemo() {
+        return (this.seq[this.pc].scrollerDemo != undefined);
+    }  
+    scrollerGlitch() {
+        return (this.seq[this.pc].scrollerGlitch != undefined);
+    }
+    CRSPInit() {
+        return (this.seq[this.pc].CRSPInit != undefined);
+    } 
 }
 
 // ======================================================
@@ -719,6 +850,9 @@ class PTick{
 window.addEventListener('load', function() {
     // canvas setup
     const canvas = document.querySelector("canvas");
+    const scrollText = "Så for 5 dage siden var jeg i DR byen og opleve Svend Brinkmann og Thomas Vinterberg sidde ved kaminen og snakke om hvordan vi kan leve med kriser. De tog udgangspunkt i nutiden og Donald Trumps behandling af Zelenskyj. Thomas fortalte hvordan han var stoppet med at se nyheder, noget som jeg kender fra mig selv og flere i min omgangskreds. Svend havde gjort det modsatte og læser flere nyheder end tidligere. Budskabet fra de to var at man skulle prøve at finde håbet og dyrke fællesskabet og kunsten. Jeg vil ikke sige at jeg blev frelst, men jeg indså at jeg finder håbet i de ting de nævner. Dog synes jeg at der manglede forholdet til naturen. Sammen med fællesskabet og kunsten er der også naturen, som giver plads til refleksion og fordybelse både derude og i vindueskarmen.";
+    const crisptext = "CR!SP";
+
     canvas.style.backgroundColor = "black";
     const width = canvas.width = window.innerWidth - 10;
     const height = canvas.height = window.innerHeight - 10;
@@ -733,6 +867,30 @@ window.addEventListener('load', function() {
     vpdecoder.decodeData();
 
     let dots = [];
+
+    var mask = document.createElement("canvas");
+    mask.width = width*1.3;
+    mask.height = height*1.3;
+    const maskdc = mask.getContext("2d");
+    maskdc.fillStyle = "rgba(0,0,0,0.6)";
+    maskdc.fillRect(0, 0, mask.width, mask.height);
+    maskdc.globalCompositeOperation = "destination-out";
+    maskdc.font = "300px Russo One";        // 300px
+    maskdc.textAlign = "center";
+    maskdc.textBaseline = "middle";
+    maskdc.fillText(crisptext, mask.width / 2, mask.height / 2);
+    maskdc.globalCompositeOperation = "source-over";
+
+    var scrollermask = document.createElement("canvas");
+    scrollermask.width = width;
+    scrollermask.height = height;
+    const scrollerdc = scrollermask.getContext("2d");
+
+    var radarcanvas = document.createElement("canvas");
+    radarcanvas.width = width;
+    radarcanvas.height = height;
+    const radardc = scrollermask.getContext("2d");
+
     for (let i = 0; i < 1000; i++) {
         dots.push(new Dot(width / 2, height / 2, PVector.random2D(), 2));
     }
@@ -741,15 +899,29 @@ window.addEventListener('load', function() {
         willReadFrequently: true
     });
 
+    var scroller = new Scroller(scrollText, "100px Russo One", dc, width, width, height/2, height, -5, 0, "white");
+
     canvas.oncontextmenu = function (e) {
         e.preventDefault();
     };
     
     let angle = 0;
     let angle2 = 0;
+    let angle3 = 0;
     const tick = new PTick();
     
     function animate() {
+        if (tick.CRSPInit()) {
+            maskdc.clearRect(0, 0, mask.width, mask.height);
+            maskdc.fillStyle = "rgba(0,0,0,0.6)";
+            maskdc.fillRect(0, 0, mask.width, mask.height);
+            maskdc.globalCompositeOperation = "destination-out";
+            maskdc.font = "300px Russo One";        // 300px
+            maskdc.textAlign = "center";
+            maskdc.textBaseline = "middle";
+            maskdc.fillText(crisptext, mask.width / 2, mask.height / 2);
+            maskdc.globalCompositeOperation = "source-over";
+        }
         if (tick.setDataIndex()) {
             vpdat.setData(capturequeue[tick.getDataIndex()]);
             vpstat = new PViewportStatistic(30, 300, width-60, 200, vpdat);
@@ -770,14 +942,6 @@ window.addEventListener('load', function() {
         if (tick.vpdecoderProgress()){
             dc.clearRect(vpdat.x+2 + vpdat.w *(1-tick.progress())-4, vpdat.y+vpdat.h-48, vpdat.w * tick.progress(), 45);
             dc.clearRect(vpdecoder.x, vpdecoder.y + (1 - tick.progress())* vpdecoder.h, vpdecoder.w-4, vpdecoder.h *(tick.progress()));
-        }
-        if (tick.subtitle()) {
-            dc.fillStyle = "gray";
-            dc.font = "40px Arial";
-            const xsize = dc.measureText(tick.getSubtitle()).width;
-            dc.fillRect((width-xsize)/2, height-80, xsize+50, 50);
-            dc.fillStyle = "white";
-            dc.fillText(tick.getSubtitle(), (width-xsize)/2 + 25, height-40);
         }
         if (tick.glitch()) glitch();
         if ((tick.glitch2())&&(tick.c%4 != 0)) glitch();
@@ -826,9 +990,85 @@ window.addEventListener('load', function() {
             }
             angle += 0.01;
         }
+        if (tick.scrollerInit()) {
+            dc.fillStyle = "red";
+            dc.fillRect(0,0,canvas.width,canvas.height);
+
+            dc.strokeStyle = "cyan";
+            dc.lineWidth = 40;
+            dc.beginPath();
+            const l = width;
+            const cx = width/2 + 0.4 * width * Math.cos(angle3*2);
+            const cy = height/2 + 0.4 * height * Math.sin(angle3);
+            dc.moveTo(cx, cy);
+            dc.lineTo(cx + l * Math.cos(angle3), cy + l * Math.sin(angle3));
+            dc.moveTo(cx, cy);
+            dc.lineTo(cx - l * Math.cos(angle3), cy - l * Math.sin(angle3));
+            dc.stroke();
+
+    //        statemachine.update(dc);
+            const xoff = mask.width*0.10*Math.cos(angle3/2) - mask.width*0.1;
+            const yoff = mask.height*0.10*Math.sin(angle3/2) - mask.height*0.1;
+            scrollerdc.clearRect(0,0,width,height);
+            scrollerdc.fillStyle = "rgba(0,0,0,0.4)";
+            scrollerdc.fillRect(0,0,width,height);
+            scrollerdc.globalCompositeOperation = "destination-out";
+            scroller.draw(scrollerdc);
+            scrollerdc.globalCompositeOperation = "source-over";
+            dc.drawImage(scrollermask, 0, 0);
+            scroller.update();
+    
+            dc.drawImage(mask, xoff, yoff);
+
+            dc.fillStyle = "rgba(0,0,0," + (tick.progress()) + ")";
+            dc.fillRect(0, 0, canvas.width, canvas.height);
+        }
+        if (tick.scrollerDemo()) {
+            dc.fillStyle = "red";
+            dc.fillRect(0,0,canvas.width,canvas.height);
+
+            dc.strokeStyle = "cyan";
+            dc.lineWidth = 40;
+            dc.beginPath();
+            const l = width;
+            const cx = width/2 + 0.4 * width * Math.cos(angle3*2);
+            const cy = height/2 + 0.4 * height * Math.sin(angle3);
+            dc.moveTo(cx, cy);
+            dc.lineTo(cx + l * Math.cos(angle3), cy + l * Math.sin(angle3));
+            dc.moveTo(cx, cy);
+            dc.lineTo(cx - l * Math.cos(angle3), cy - l * Math.sin(angle3));
+            dc.stroke();
+
+    //        statemachine.update(dc);
+            const xoff = mask.width*0.10*Math.cos(angle3/2) - mask.width*0.1;
+            const yoff = mask.height*0.10*Math.sin(angle3/2) - mask.height*0.1;
+            scrollerdc.clearRect(0,0,width,height);
+            scrollerdc.fillStyle = "rgba(0,0,0,0.4)";
+            scrollerdc.fillRect(0,0,width,height);
+            scrollerdc.globalCompositeOperation = "destination-out";
+            scroller.draw(scrollerdc);
+            scrollerdc.globalCompositeOperation = "source-over";
+            dc.drawImage(scrollermask, 0, 0);
+            scroller.update();
+    
+            dc.drawImage(mask, xoff, yoff);
+        }
+        if (tick.scrollerGlitch()) {
+            glitch();
+            scroller.update();
+        }
         if (tick.particleInit()) {
             dots = [];
         }
+        if (tick.subtitle()) {
+            dc.fillStyle = "gray";
+            dc.font = "40px Arial";
+            const xsize = dc.measureText(tick.getSubtitle()).width;
+            dc.fillRect((width-xsize)/2, height-80, xsize+50, 50);
+            dc.fillStyle = "white";
+            dc.fillText(tick.getSubtitle(), (width-xsize)/2 + 25, height-40);
+        }
+        angle3 += 0.01;
         tick.t();
         requestAnimationFrame(animate);
     }
@@ -875,14 +1115,5 @@ window.addEventListener('load', function() {
           const imageData = dc.getImageData(x, y, width, height);
           dc.putImageData(imageData, dx, y);
         }
-      
-        // Optional: Add RGB channel separation
-        const imgData = dc.getImageData(0, 0, canvas.width, canvas.height);
-        for (let i = 0; i < imgData.data.length; i += 4) {
-          imgData.data[i] = imgData.data[i + 1];     // Red
-          imgData.data[i + 2] = imgData.data[i];     // Blue
-        }
-        dc.putImageData(imgData, 0, 0);
-      
       }
 });
