@@ -726,6 +726,7 @@ class Scroller{
 const sequence = [
     { tick: 5, cls: 1},
     { tick: 5, particleInit: 1, CRSPInit: 1},
+//    { tick: 500, cls:1, credits: 1, subtitle: "DEBUG..."},
     { tick: 500, cls:1, particleIntro: 1, subtitle: "Intro..."},
     { tick: 1000, cls:1, particle: 1, subtitle: "Loading..."},
     { tick: 1250, cls:1, particleOutro: 1, subtitle: "Outro..."},
@@ -744,8 +745,11 @@ const sequence = [
     { tick: 3600, vpdat: 1, vpstat: 1, vpdecoder: 1, glitch2: 1},
     { tick: 3630, noise: 1 , subtitle: "Noise..."},
     { tick: 3630, resetScrollers: 1},
-    { tick: 6000, scrollerDemo2: 1, subtitle: "Scroller..."},
-    { tick: 6200, noise: 1 , subtitle: "Noise..."},
+    { tick: 5500, scrollerDemo2: 1, subtitle: "Scroller..."},
+    { tick: 5600, scrollerDemo2FadeOut: 1, subtitle: "Ending Scroller..."},
+    { tick: 5800, credits: 1 , subtitle: "Credits..."},
+    { tick: 5900, creditsFadeOut: 1 , subtitle: "Fade out..."},
+    { tick: 6000, subtitle: "The end..."},
 
     //    { tick: 250, glitch: 1},
 ];
@@ -850,6 +854,15 @@ class PTick{
     noise() {
         return (this.seq[this.pc].noise != undefined);
     } 
+    scrollerDemo2FadeOut() {
+        return (this.seq[this.pc].scrollerDemo2FadeOut != undefined);
+    }
+    credits() {
+        return (this.seq[this.pc].credits != undefined);
+    }
+    creditsFadeOut() {
+        return (this.seq[this.pc].creditsFadeOut != undefined);
+    }
 }
 
 // ======================================================
@@ -1096,6 +1109,38 @@ window.addEventListener('load', function() {
     
             dc.drawImage(mask, xoff, yoff);
         }
+        if (tick.scrollerDemo2FadeOut()) {
+            dc.fillStyle = "red";
+            dc.fillRect(0,0,canvas.width,canvas.height);
+
+            dc.strokeStyle = "cyan";
+            dc.lineWidth = 240 + 200 * Math.sin(angle3);
+            dc.beginPath();
+            const l = width;
+            const cx = width/2 + 0.4 * width * Math.cos(angle3*2);
+            const cy = height/2 + 0.4 * height * Math.sin(angle3);
+            dc.moveTo(cx, cy);
+            dc.lineTo(cx + l * Math.cos(angle3), cy + l * Math.sin(angle3));
+            dc.moveTo(cx, cy);
+            dc.lineTo(cx - l * Math.cos(angle3), cy - l * Math.sin(angle3));
+            dc.stroke();
+
+    //        statemachine.update(dc);
+            const xoff = mask.width*0.10*Math.cos(angle3/2) - mask.width*0.1;
+            const yoff = mask.height*0.10*Math.sin(angle3/2) - mask.height*0.1;
+            scrollerdc.clearRect(0,0,width,height);
+            scrollerdc.fillStyle = "rgba(0,0,0,0.4)";
+            scrollerdc.fillRect(0,0,width,height);
+            scrollerdc.globalCompositeOperation = "destination-out";
+            scroller2.draw(scrollerdc);
+            scrollerdc.globalCompositeOperation = "source-over";
+            dc.drawImage(scrollermask, 0, 0);
+            scroller2.update();
+    
+            dc.drawImage(mask, xoff, yoff);
+            dc.fillStyle = "rgba(0,0,0," + (1-tick.progress()) + ")";
+            dc.fillRect(0, 0, canvas.width, canvas.height);
+        }
         if (tick.scrollerGlitch()) {
             glitch();
 //            drawNoise(dc, width, height, 40);
@@ -1104,6 +1149,48 @@ window.addEventListener('load', function() {
         }
         if (tick.particleInit()) {
             dots = [];
+        }
+        if (tick.credits()) {
+            drawNoise(dc, width, height, 40);
+            drawPixelate(dc, canvas, 8);
+            scrollerdc.font = scroller2.font;
+            scrollerdc.clearRect(0,0,width,height);
+            scrollerdc.fillStyle = "rgba(0,0,0,1)";
+            scrollerdc.fillRect(0,0,width,height);
+            scrollerdc.globalCompositeOperation = "destination-out";
+            let string = "Created by: Oldhandmixer|Directed by: Dipe@CR!SP|Music by: Salle@CR!SP|Special greetings to:|Jumalauta|Hedelmae|Mehu";
+            let stringArray = string.split("|");
+            let xtop = 100;
+            stringArray.forEach((str, index) => {
+                const xsize = scrollerdc.measureText(str).width;
+                scrollerdc.fillStyle = "white";
+                scrollerdc.fillText(str, (width-xsize)/2 + 25, xtop + index * 130);
+            });
+            scrollerdc.globalCompositeOperation = "source-over";
+            dc.drawImage(scrollermask, 0, 0);
+            dc.fillStyle = "rgba(0,0,0," + (tick.progress()) + ")";
+            dc.fillRect(0, 0, canvas.width, canvas.height);
+        }
+        if (tick.creditsFadeOut()) {
+            drawNoise(dc, width, height, 40);
+            drawPixelate(dc, canvas, 8);
+            scrollerdc.font = scroller2.font;
+            scrollerdc.clearRect(0,0,width,height);
+            scrollerdc.fillStyle = "rgba(0,0,0,1)";
+            scrollerdc.fillRect(0,0,width,height);
+            scrollerdc.globalCompositeOperation = "destination-out";
+            let string = "Created by: Oldhandmixer|Directed by: Dipe@CR!SP|Music by: Salle@CR!SP|Special greetings to:|Jumalauta|Hedelmae|Mehu";
+            let stringArray = string.split("|");
+            let xtop = 100;
+            stringArray.forEach((str, index) => {
+                const xsize = scrollerdc.measureText(str).width;
+                scrollerdc.fillStyle = "white";
+                scrollerdc.fillText(str, (width-xsize)/2 + 25, xtop + index * 130);
+            });
+            scrollerdc.globalCompositeOperation = "source-over";
+            dc.drawImage(scrollermask, 0, 0);
+            dc.fillStyle = "rgba(0,0,0," + (1-tick.progress()) + ")";
+            dc.fillRect(0, 0, canvas.width, canvas.height);
         }
         if (tick.subtitle()) {
             dc.fillStyle = "gray";
