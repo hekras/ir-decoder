@@ -149,7 +149,7 @@ class PTick{
     }
 }
 
-function sceneParticelIntro(ctx, tick) {
+async function sceneParticelIntro(ctx, tick) {
     var dots = [];
     var angle = Math.random() * 2 * Math.PI;
     var angle2 = Math.random() * 2 * Math.PI;
@@ -179,7 +179,7 @@ function sceneParticelIntro(ctx, tick) {
         }
         angle += 0.01;
         tick.frameBuffer.push(buffer);
-        console.log("Frame: " + count + " - Buffer length: " + tick.frameBuffer.length);
+        await new Promise(resolve => setTimeout(resolve, 10));
     }
 
     for(var count = 0; count < 500; count++) {
@@ -202,7 +202,7 @@ function sceneParticelIntro(ctx, tick) {
         }
         angle += 0.01;
         tick.frameBuffer.push(buffer);
-        console.log("Frame: " + count + " - Buffer length: " + tick.frameBuffer.length);
+        await new Promise(resolve => setTimeout(resolve, 10));
     }
 
     for(var count = 0; count < 250; count++) {
@@ -225,7 +225,7 @@ function sceneParticelIntro(ctx, tick) {
         }
         angle += 0.01;
         tick.frameBuffer.push(buffer);
-        console.log("Frame: " + count + " - Buffer length: " + tick.frameBuffer.length);
+        await new Promise(resolve => setTimeout(resolve, 10));
     }
 }
 
@@ -264,6 +264,7 @@ window.addEventListener('load', function() {
         canvas.style.position = "absolute";
         canvas.style.left = ((winW - newW) / 2) + "px";
         canvas.style.top = ((winH - newH) / 2) + "px";
+        canvas.style.backgroundColor = "black";
     }
 
     window.addEventListener('resize', resizeCanvasCSS);
@@ -278,27 +279,21 @@ window.addEventListener('load', function() {
         }
     }
     window.addEventListener('click', goFullscreen);
-
-    // Example: draw something
-    function repaint() {
-        const ctx = canvas.getContext('2d');
-        ctx.fillStyle = 'black';
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-        ctx.fillStyle = 'red';
-        ctx.fillRect(100, 100, 200, 200);
-        ctx.fillRect(canvas.width-300, canvas.height - 300, 200, 200);
-    }
     resizeCanvasCSS();
 
     function animate() {
- //       repaint();
-        if (frameBuffer.length > 0) {
-            console.log("Drawing frame: " + frameBuffer.length);
             const ctx = canvas.getContext('2d');
+        if (frameBuffer.length > 0) {
             const frame = frameBuffer.shift();
-//            const frame = frameBuffer[3];
             ctx.drawImage(frame, 0, 0);
         }
+        ctx.fillStyle = "gray";
+        ctx.font = "40px Arial";
+        const str = "buffers: " + frameBuffer.length;
+        const xsize = ctx.measureText(str).width;
+        ctx.fillRect((canvas.width-xsize)/2, canvas.height-80, xsize+50, 50);
+        ctx.fillStyle = "white";
+        ctx.fillText(str, (canvas.width-xsize)/2 + 25, canvas.height-40);
         requestAnimationFrame(animate);
     }
     animate(); 
