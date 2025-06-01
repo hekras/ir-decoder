@@ -108,46 +108,29 @@ class Dot {
 // Globals
 // ======================================================
 // ======================================================
-// runbook
+// Tick - Scene Particel Intro
 // ======================================================
-const runbook = [
-    { tick: 0, action: sceneParticelIntro },
-];
 
 class PTick{
     constructor() {
-        this.c = 0; // the counter
-        this.pc = 0; // sequence program counter
-        this.seq = runbook;
         this.frameBuffer = [];
-        this.dt = this.seq[0].tick; // delta time
+        this.fps = 30;
     }
-
-    reset() {
-        this.c = 0;
-        this.pc = 0;
-        this.dt = this.seq[0].tick;
-        this.frameBuffer = [];
-    }
-
-    progress(){
-        return (this.seq[this.pc].tick - this.c)/this.dt;
-    }
-
     action(dc) {
-        if (this.seq[this.pc].action) {
-            this.seq[this.pc].action(dc, this);
-        }
+        sceneParticelIntro(dc, this);
     }
-
     async pushFrameBuffer(buffer) {
         this.frameBuffer.push(buffer);
         while (this.frameBuffer.length > 50) {
             await new Promise(resolve => setTimeout(resolve, 10));
         }
     }
+
 }
 
+// ======================================================
+// Scene Particel Intro
+// ======================================================
 async function sceneParticelIntro(ctx, t) {
     var dots = [];
     var angle = Math.random() * 2 * Math.PI;
@@ -179,8 +162,12 @@ async function sceneParticelIntro(ctx, t) {
             }
         }
         angle += (0.02 * count / 250);
-        t.pushFrameBuffer(buffer);
-        await new Promise(resolve => setTimeout(resolve, 10));
+        t.frameBuffer.push(buffer);
+        while (t.frameBuffer.length > 50) {
+            await new Promise(resolve => setTimeout(resolve, 10));
+        }
+//        t.pushFrameBuffer(buffer);
+//        await new Promise(resolve => setTimeout(resolve, 10));
     }
 
     for(var count = 0; count < 250; count++) {
@@ -202,8 +189,12 @@ async function sceneParticelIntro(ctx, t) {
             }
         }
         angle += 0.02;
-        t.pushFrameBuffer(buffer);
-        await new Promise(resolve => setTimeout(resolve, 10));
+        t.frameBuffer.push(buffer);
+        while (t.frameBuffer.length > 50) {
+            await new Promise(resolve => setTimeout(resolve, 10));
+        }
+//        t.pushFrameBuffer(buffer);
+//        await new Promise(resolve => setTimeout(resolve, 10));
     }
 
     for(var count = 0; count < 125; count++) {
@@ -225,8 +216,12 @@ async function sceneParticelIntro(ctx, t) {
             }
         }
         angle += (0.02 * (1-count / 125));
-        t.pushFrameBuffer(buffer);
-        await new Promise(resolve => setTimeout(resolve, 10));
+        t.frameBuffer.push(buffer);
+        while (t.frameBuffer.length > 50) {
+            await new Promise(resolve => setTimeout(resolve, 10));
+        }
+//        t.pushFrameBuffer(buffer);
+//        await new Promise(resolve => setTimeout(resolve, 10));
     }
 
     for(var count = 0; count < 50; count++) {
@@ -246,8 +241,12 @@ async function sceneParticelIntro(ctx, t) {
         }
         dots = newDots;
         angle += (0.02 * (1-count / 125));
-        t.pushFrameBuffer(buffer);
-        await new Promise(resolve => setTimeout(resolve, 10));
+        t.frameBuffer.push(buffer);
+        while (t.frameBuffer.length > 50) {
+            await new Promise(resolve => setTimeout(resolve, 10));
+        }
+//        t.pushFrameBuffer(buffer);
+//        await new Promise(resolve => setTimeout(resolve, 10));
     }
 
 
@@ -257,8 +256,8 @@ async function sceneParticelIntro(ctx, t) {
 // ======================================================
 // Main - Program starts here
 // ======================================================
-const FPS = 50;
-const FRAME_DURATION = 1000 / FPS; // us per frame
+let lastFrameTime = performance.now();
+let frameCount = 0;
 
 window.addEventListener('load', function() {
     const canvas = document.createElement('canvas');
@@ -306,10 +305,6 @@ window.addEventListener('load', function() {
         } else if (canvas.msRequestFullscreen) {
             canvas.msRequestFullscreen();
         }
-        t.reset();
-        t.action(canvas.getContext('2d'));
-
-         startTime = performance.now();
     }
     window.addEventListener('click', goFullscreen);
     resizeCanvasCSS();
@@ -318,7 +313,15 @@ window.addEventListener('load', function() {
     function animate() {
         const ctx = canvas.getContext('2d');
         const elapsed = performance.now() - startTime;
-        const frameIndex = Math.floor(elapsed / FRAME_DURATION);
+
+        // FPS calculation
+        frameCount++;
+        const now = performance.now();
+        if (now - lastFrameTime >= 1000) {
+            t.fps = frameCount;
+            frameCount = 0;
+            lastFrameTime = now;
+        }
 
         // Only draw if frame is available
         if (t.frameBuffer.length > 0) {
@@ -328,7 +331,7 @@ window.addEventListener('load', function() {
 
         ctx.fillStyle = "gray";
         ctx.font = "40px Arial";
-        const str = "buffers: " + t.frameBuffer.length + " | buffer time: " + Math.floor(1000 * t.frameBuffer.length / FPS) + "ms | elapsed: " + elapsed.toFixed(2) + "ms";
+        const str = "fps: " + t.fps + " | buffers: " + t.frameBuffer.length + " | buffer time: " + Math.floor(1000 * t.frameBuffer.length / t.fps) + "ms | elapsed: " + elapsed.toFixed(2) + "ms";
         const xsize = ctx.measureText(str).width;
         ctx.fillRect((canvas.width-xsize)/2, canvas.height-80, xsize+50, 50);
         ctx.fillStyle = "white";
