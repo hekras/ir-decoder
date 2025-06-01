@@ -115,27 +115,19 @@ const runbook = [
 ];
 
 class PTick{
-    constructor(frameBuffer, runbook) {
+    constructor() {
         this.c = 0; // the counter
         this.pc = 0; // sequence program counter
         this.seq = runbook;
-        this.frameBuffer = frameBuffer;
+        this.frameBuffer = [];
         this.dt = this.seq[0].tick; // delta time
-        console.log("PTick initialized with sequence length: " + this.frameBuffer.length);
     }
 
-    t(){
-        this.c++
-        if (this.c >= this.seq[this.pc].tick){
-            this.pc = (this.pc == this.seq.length-1) ? 0 : this.pc+1;
-            if (this.pc == 0){
-                this.c = 0;
-                this.dt = this.seq[this.pc].tick;
-            } 
-            else{
-                this.dt = this.seq[this.pc].tick - this.seq[this.pc-1].tick;
-            }
-        }
+    reset() {
+        this.c = 0;
+        this.pc = 0;
+        this.dt = this.seq[0].tick;
+        this.frameBuffer = [];
     }
 
     progress(){
@@ -147,20 +139,29 @@ class PTick{
             this.seq[this.pc].action(dc, this);
         }
     }
+
+    async pushFrameBuffer(buffer) {
+        this.frameBuffer.push(buffer);
+        while (this.frameBuffer.length > 50) {
+            await new Promise(resolve => setTimeout(resolve, 10));
+        }
+    }
 }
 
-async function sceneParticelIntro(ctx, tick) {
+async function sceneParticelIntro(ctx, t) {
     var dots = [];
     var angle = Math.random() * 2 * Math.PI;
     var angle2 = Math.random() * 2 * Math.PI;
     var width = ctx.canvas.width;
     var height = ctx.canvas.height;
 
-    for(var count = 0; count < 500; count++) {
+    for(var count = 0; count < 250; count++) {
         let buffer = document.createElement('canvas');
         buffer.width = width;
         buffer.height = height;
         const dc = buffer.getContext('2d');        
+        dots.push(new Dot(width / 2 + 0.4 * width * Math.cos(angle), height / 2 + 0.4 * height * Math.sin(angle), PVector.direction(angle2+Math.random()), 2));
+        dots.push(new Dot(width / 2 + 0.4 * width * Math.cos(angle), height / 2 + 0.4 * height * Math.sin(angle), PVector.direction(angle2+Math.random()), 2));
         dots.push(new Dot(width / 2 + 0.4 * width * Math.cos(angle), height / 2 + 0.4 * height * Math.sin(angle), PVector.direction(angle2+Math.random()), 2));
         dots.push(new Dot(width / 2 + 0.4 * width * Math.cos(angle), height / 2 + 0.4 * height * Math.sin(angle), PVector.direction(angle2+Math.random()), 2));
 
@@ -168,40 +169,17 @@ async function sceneParticelIntro(ctx, tick) {
         dc.fillRect(0, 0, width, height);
         for (let i = 0; i < dots.length; i++) {
             dots[i].update();
-            dots[i].showProgress(dc, count / 500);
+            dots[i].showProgress(dc, count / 250);
             if (dots[i].pos.x > width || dots[i].pos.x < 0 || dots[i].pos.y > height || dots[i].pos.y < 0|| dots[i].counter < 0) {
                 dots[i].pos.set(width / 2 + 0.4 * width * Math.cos(angle), height / 2 + 0.4 * height * Math.sin(angle));
                 dots[i].vel = PVector.direction(angle2+Math.random());
-                angle2 += 0.01;
+                angle2 += 0.02;
                 dots[i].counter = 50 + 100 * Math.random();
                 dots[i].color = "rgba(255, 255, 255, 0.5)";
             }
         }
-        angle += 0.01;
-        tick.frameBuffer.push(buffer);
-        await new Promise(resolve => setTimeout(resolve, 10));
-    }
-
-    for(var count = 0; count < 500; count++) {
-        let buffer = document.createElement('canvas');
-        buffer.width = width;
-        buffer.height = height;
-        const dc = buffer.getContext('2d');        
-        dc.fillStyle = "black";
-        dc.fillRect(0, 0, width, height);
-        for (let i = 0; i < dots.length; i++) {
-            dots[i].update();
-            dots[i].show(dc);
-            if (dots[i].pos.x > width || dots[i].pos.x < 0 || dots[i].pos.y > height || dots[i].pos.y < 0|| dots[i].counter < 0) {
-                dots[i].pos.set(width / 2 + 0.4 * width * Math.cos(angle), height / 2 + 0.4 * height * Math.sin(angle));
-                dots[i].vel = PVector.direction(angle2+Math.random());
-                angle2 += 0.01;
-                dots[i].counter = 50 + 100 * Math.random();
-                dots[i].color = "rgba(255, 255, 255, 0.5)";
-            }
-        }
-        angle += 0.01;
-        tick.frameBuffer.push(buffer);
+        angle += (0.02 * count / 250);
+        t.pushFrameBuffer(buffer);
         await new Promise(resolve => setTimeout(resolve, 10));
     }
 
@@ -214,27 +192,75 @@ async function sceneParticelIntro(ctx, tick) {
         dc.fillRect(0, 0, width, height);
         for (let i = 0; i < dots.length; i++) {
             dots[i].update();
-            dots[i].showProgress(dc, 1 - count/250);
+            dots[i].show(dc);
             if (dots[i].pos.x > width || dots[i].pos.x < 0 || dots[i].pos.y > height || dots[i].pos.y < 0|| dots[i].counter < 0) {
                 dots[i].pos.set(width / 2 + 0.4 * width * Math.cos(angle), height / 2 + 0.4 * height * Math.sin(angle));
                 dots[i].vel = PVector.direction(angle2+Math.random());
-                angle2 += 0.01;
+                angle2 += 0.02;
                 dots[i].counter = 50 + 100 * Math.random();
                 dots[i].color = "rgba(255, 255, 255, 0.5)";
             }
         }
-        angle += 0.01;
-        tick.frameBuffer.push(buffer);
+        angle += 0.02;
+        t.pushFrameBuffer(buffer);
         await new Promise(resolve => setTimeout(resolve, 10));
     }
+
+    for(var count = 0; count < 125; count++) {
+        let buffer = document.createElement('canvas');
+        buffer.width = width;
+        buffer.height = height;
+        const dc = buffer.getContext('2d');        
+        dc.fillStyle = "black";
+        dc.fillRect(0, 0, width, height);
+        for (let i = 0; i < dots.length; i++) {
+            dots[i].update();
+            dots[i].showProgress(dc, 1 - count/125);
+            if (dots[i].pos.x > width || dots[i].pos.x < 0 || dots[i].pos.y > height || dots[i].pos.y < 0|| dots[i].counter < 0) {
+                dots[i].pos.set(width / 2 + 0.4 * width * Math.cos(angle), height / 2 + 0.4 * height * Math.sin(angle));
+                dots[i].vel = PVector.direction(angle2+Math.random());
+                angle2 += 0.02;
+                dots[i].counter = 50 + 100 * Math.random();
+                dots[i].color = "rgba(255, 255, 255, 0.5)";
+            }
+        }
+        angle += (0.02 * (1-count / 125));
+        t.pushFrameBuffer(buffer);
+        await new Promise(resolve => setTimeout(resolve, 10));
+    }
+
+    for(var count = 0; count < 50; count++) {
+        let buffer = document.createElement('canvas');
+        buffer.width = width;
+        buffer.height = height;
+        const dc = buffer.getContext('2d');        
+        dc.fillStyle = "black";
+        dc.fillRect(0, 0, width, height);
+        let newDots = [];
+        for (let i = 0; i < dots.length; i++) {
+            dots[i].update();
+            dots[i].showProgress(dc, 0.01);
+            if ( dots[i].counter > 0) {
+                newDots.push(dots[i]);
+            }
+        }
+        dots = newDots;
+        angle += (0.02 * (1-count / 125));
+        t.pushFrameBuffer(buffer);
+        await new Promise(resolve => setTimeout(resolve, 10));
+    }
+
+
 }
 
 
 // ======================================================
 // Main - Program starts here
 // ======================================================
+const FPS = 50;
+const FRAME_DURATION = 1000 / FPS; // us per frame
+
 window.addEventListener('load', function() {
-    let frameBuffer = [];
     const canvas = document.createElement('canvas');
     document.body.appendChild(canvas);
 
@@ -267,6 +293,9 @@ window.addEventListener('load', function() {
         canvas.style.backgroundColor = "black";
     }
 
+    let t = new PTick();
+    t.action(canvas.getContext('2d'));
+
     window.addEventListener('resize', resizeCanvasCSS);
     // Fullscreen on user click (required by browsers)
     function goFullscreen() {
@@ -277,19 +306,29 @@ window.addEventListener('load', function() {
         } else if (canvas.msRequestFullscreen) {
             canvas.msRequestFullscreen();
         }
+        t.reset();
+        t.action(canvas.getContext('2d'));
+
+         startTime = performance.now();
     }
     window.addEventListener('click', goFullscreen);
     resizeCanvasCSS();
+    let startTime = performance.now();
 
     function animate() {
-            const ctx = canvas.getContext('2d');
-        if (frameBuffer.length > 0) {
-            const frame = frameBuffer.shift();
+        const ctx = canvas.getContext('2d');
+        const elapsed = performance.now() - startTime;
+        const frameIndex = Math.floor(elapsed / FRAME_DURATION);
+
+        // Only draw if frame is available
+        if (t.frameBuffer.length > 0) {
+            const frame = t.frameBuffer.shift();
             ctx.drawImage(frame, 0, 0);
         }
+
         ctx.fillStyle = "gray";
         ctx.font = "40px Arial";
-        const str = "buffers: " + frameBuffer.length;
+        const str = "buffers: " + t.frameBuffer.length + " | buffer time: " + Math.floor(1000 * t.frameBuffer.length / FPS) + "ms | elapsed: " + elapsed.toFixed(2) + "ms";
         const xsize = ctx.measureText(str).width;
         ctx.fillRect((canvas.width-xsize)/2, canvas.height-80, xsize+50, 50);
         ctx.fillStyle = "white";
@@ -298,6 +337,4 @@ window.addEventListener('load', function() {
     }
     animate(); 
 
-    const t = new PTick(frameBuffer, runbook);
-    t.action(canvas.getContext('2d'));
 });
