@@ -104,6 +104,8 @@ class Dot {
     }
 }
 
+
+
 // ======================================================
 // Globals
 // ======================================================
@@ -114,18 +116,15 @@ class Dot {
 class PTick{
     constructor() {
         this.frameBuffer = [];
-        this.fps = 30;
+        this.fps = 60;
+        this.running = false;
+    }
+    start() {
+        this.running = true;
     }
     action(dc) {
-        sceneParticelIntro(dc, this);
+        sceneParticelIntro(dc, this); // 625 frames
     }
-    async pushFrameBuffer(buffer) {
-        this.frameBuffer.push(buffer);
-        while (this.frameBuffer.length > 50) {
-            await new Promise(resolve => setTimeout(resolve, 10));
-        }
-    }
-
 }
 
 // ======================================================
@@ -137,7 +136,40 @@ async function sceneParticelIntro(ctx, t) {
     var angle2 = Math.random() * 2 * Math.PI;
     var width = ctx.canvas.width;
     var height = ctx.canvas.height;
+    const scrollText = "Så for 5 dage siden var jeg i DR byen og opleve Svend Brinkmann og Thomas Vinterberg sidde ved kaminen og snakke om hvordan vi kan leve med kriser. De tog udgangspunkt i nutiden og Donald Trumps behandling af Zelenskyj. Thomas fortalte hvordan han var stoppet med at se nyheder, noget som jeg kender fra mig selv og flere i min omgangskreds. Svend havde gjort det modsatte og læser flere nyheder end tidligere. Budskabet fra de to var at man skulle prøve at finde håbet og dyrke fællesskabet og kunsten. Jeg vil ikke sige at jeg blev frelst, men jeg indså at jeg finder håbet i de ting de nævner. Dog synes jeg at der manglede forholdet til naturen. Sammen med fællesskabet og kunsten er der også naturen, som giver plads til refleksion og fordybelse både derude og i vindueskarmen.";
+    const scrollText2 = ".... WE ARE BACK  .... Some finish greetings to friends and all the other people who are reading this. I hope you are all doing well and enjoying the demo. This is a test of the scrolling text functionality. The text should scroll smoothly across the screen, providing a nice visual effect. Let's see how it goes!";
+    const crisptext = "CR!SP";
 
+    var mask = document.createElement("canvas");
+    mask.width = ctx.canvas.width*1.3;
+    mask.height = ctx.canvas.height*1.3;
+    const maskdc = mask.getContext("2d");
+    maskdc.fillStyle = "rgba(0,0,0,0.6)";
+    maskdc.fillRect(0, 0, mask.width, mask.height);
+    maskdc.globalCompositeOperation = "destination-out";
+    maskdc.font = "300px Russo One";        // 300px
+    maskdc.textAlign = "center";
+    maskdc.textBaseline = "middle";
+    maskdc.fillText(crisptext, mask.width / 2, mask.height / 2);
+    maskdc.globalCompositeOperation = "source-over";
+
+    var scrollermask = document.createElement("canvas");
+    scrollermask.width = ctx.canvas.width;
+    scrollermask.height = ctx.canvas.height;
+    const scrollerdc = scrollermask.getContext("2d");
+
+    var radarcanvas = document.createElement("canvas");
+    radarcanvas.width = ctx.canvas.width;
+    radarcanvas.height = ctx.canvas.height;
+    const radardc = scrollermask.getContext("2d");
+
+
+    while (!t.running) {
+        await new Promise(resolve => setTimeout(resolve, 10));
+    }
+
+
+    // add particles
     for(var count = 0; count < 250; count++) {
         let buffer = document.createElement('canvas');
         buffer.width = width;
@@ -166,10 +198,9 @@ async function sceneParticelIntro(ctx, t) {
         while (t.frameBuffer.length > 50) {
             await new Promise(resolve => setTimeout(resolve, 10));
         }
-//        t.pushFrameBuffer(buffer);
-//        await new Promise(resolve => setTimeout(resolve, 10));
     }
 
+    // run intro
     for(var count = 0; count < 250; count++) {
         let buffer = document.createElement('canvas');
         buffer.width = width;
@@ -193,10 +224,9 @@ async function sceneParticelIntro(ctx, t) {
         while (t.frameBuffer.length > 50) {
             await new Promise(resolve => setTimeout(resolve, 10));
         }
-//        t.pushFrameBuffer(buffer);
-//        await new Promise(resolve => setTimeout(resolve, 10));
     }
 
+    // fade out
     for(var count = 0; count < 125; count++) {
         let buffer = document.createElement('canvas');
         buffer.width = width;
@@ -220,10 +250,9 @@ async function sceneParticelIntro(ctx, t) {
         while (t.frameBuffer.length > 50) {
             await new Promise(resolve => setTimeout(resolve, 10));
         }
-//        t.pushFrameBuffer(buffer);
-//        await new Promise(resolve => setTimeout(resolve, 10));
     }
 
+    // fade out and remove particles
     for(var count = 0; count < 50; count++) {
         let buffer = document.createElement('canvas');
         buffer.width = width;
@@ -240,15 +269,34 @@ async function sceneParticelIntro(ctx, t) {
             }
         }
         dots = newDots;
-        angle += (0.02 * (1-count / 125));
+        angle += (0.02 * (1-count / 50));
         t.frameBuffer.push(buffer);
         while (t.frameBuffer.length > 50) {
             await new Promise(resolve => setTimeout(resolve, 10));
         }
-//        t.pushFrameBuffer(buffer);
-//        await new Promise(resolve => setTimeout(resolve, 10));
     }
 
+    dots = [];
+
+    // scroller fade in
+    for(var count = 0; count < 125; count++) {
+        let buffer = document.createElement('canvas');
+        buffer.width = width;
+        buffer.height = height;
+        const dc = buffer.getContext('2d');        
+        dc.fillStyle = "black";
+        dc.fillRect(0, 0, width, height);
+        dc.fillStyle = "rgba(255, 255, 255, " + (count / 125) + ")";
+        dc.font = "bold 60px Arial";
+        const str = "Welcome to the Particle World!";
+        const xsize = dc.measureText(str).width;
+        dc.fillText(str, (width - xsize) / 2, height / 2);
+        t.frameBuffer.push(buffer);
+        while (t.frameBuffer.length > 50) {
+            await new Promise(resolve => setTimeout(resolve, 10));
+        }
+    }
+    
 
 }
 
@@ -294,6 +342,7 @@ window.addEventListener('load', function() {
 
     let t = new PTick();
     t.action(canvas.getContext('2d'));
+    const audio = new Audio('./Mixdown_14.mp3'); // Replace with your MP3 file path or URL
 
     window.addEventListener('resize', resizeCanvasCSS);
     // Fullscreen on user click (required by browsers)
@@ -305,6 +354,10 @@ window.addEventListener('load', function() {
         } else if (canvas.msRequestFullscreen) {
             canvas.msRequestFullscreen();
         }
+        t.start();
+        audio.play();   
+        window.removeEventListener('click', goFullscreen); // Remove listener after first click
+
     }
     window.addEventListener('click', goFullscreen);
     resizeCanvasCSS();
