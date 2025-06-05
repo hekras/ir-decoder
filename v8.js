@@ -1,3 +1,4 @@
+    const audio = new Audio('./Mixdown_14.mp3'); // Replace with your MP3 file path or URL
 // ======================================================
 // ======================================================
 class PVector {
@@ -104,11 +105,158 @@ class Dot {
     }
 }
 
+function glitch(buffer) {
+    const sliceCount = 20;
+    const dc = buffer.getContext('2d', {
+        willReadFrequently: true
+    });
+    for (let i = 0; i < sliceCount; i++) {
+        const x = 0;
+        const y = Math.random() * buffer.height;
+        const width = buffer.width;
+        const height = Math.random() * 10 + 5;
+    
+        const dx = Math.random() * 50 - 25; // horizontal shift
+        const imageData = dc.getImageData(x, y, width, height);
+        dc.putImageData(imageData, dx, y);
+    }
+}
 
+function drawNoise(dc, width, height, alpha = 40) {
+    const imageData = dc.createImageData(width, height);
+    const buffer = imageData.data;
+    for (let i = 0; i < buffer.length; i += 4) {
+        const val = (64 * Math.floor(Math.random() * 4)); 
+        buffer[i] = val;     // R
+        buffer[i + 1] = val; // G
+        buffer[i + 2] = val; // B
+        buffer[i + 3] = 255; // Alpha (0-255)
+    }
+    dc.putImageData(imageData, 0, 0);
+}
+
+function drawPixelate(dc, canvas, pixelSize = 8) {
+    const off = document.createElement('canvas');
+    off.width = Math.ceil(canvas.width / pixelSize);
+    off.height = Math.ceil(canvas.height / pixelSize);
+    const offCtx = off.getContext('2d');
+    offCtx.drawImage(canvas, 0, 0, off.width, off.height);
+    dc.imageSmoothingEnabled = false;
+    dc.drawImage(off, 0, 0, off.width, off.height, 0, 0, canvas.width, canvas.height);
+    dc.imageSmoothingEnabled = true;
+}
+
+// ======================================================
+// ScrollerChar and Path classes
+// ======================================================
+class ScrollerChar{
+    constructor(char, xoffset, width){
+        this.char = char;
+        this.xoffset = xoffset;
+        this.width = width; 
+    }
+}
+
+class Path{
+    constructor(x, y, ang, color){
+        this.x = x;
+        this.y = y;
+        this.ang = ang;
+        this.color = color;
+    }
+    draw(dc){
+        dc.fillStyle = this.color;
+        dc.fillRect(this.x, this.y, 5, 5);
+    }
+}
+
+// ======================================================
+// Scroller class
+// ======================================================
+class Scroller{
+    constructor(text, font, dc, x, width, y, height, dx, dy, color){
+        this.text = text;
+        this.font = font;
+        this.width = width;
+        this.x = x;
+        this.x0 = x;
+        dc.font = font;
+        const temp = text.split("");
+        this.chars = [];
+        let xoffset = 0;
+        dc.font = this.font;
+        for (let i = 0; i < temp.length; i++) {
+            this.chars.push(new ScrollerChar(temp[i], xoffset, dc.measureText(temp[i]).width));
+            xoffset += dc.measureText(temp[i]).width;
+        }
+        this.xmax = xoffset + width;
+        this.y = y;
+        this.dx = dx;
+        this.dy = dy;
+        this.color = color;
+        this.ticks = 0;
+        this.path = [];
+        for (let i = 0; i < this.width; i++) {
+            let x = i - width*0.25;
+            this.path.push(new Path(x, height*0.8, 0, color));
+        }
+        let x0 = width*0.75;
+        let y0 = height*(0.5+0.15);
+        for (let a = -Math.PI/2; a < Math.PI/2; a+=0.005) {
+            let x = x0 + 0.15*height*Math.cos(a);
+            let y = y0 - 0.15*height*Math.sin(a);
+            this.path.push(new Path(x, y, -Math.PI/2 - a, "orange"));
+        }
+        for (let i = width*0.75; i > width*0.25; i--) {
+            this.path.push(new Path(i, height*0.5, Math.PI,color));
+        }
+        x0 = width*0.25;
+        y0 = height*(0.5-0.15);
+        for (let a = 1.5*Math.PI; a > 0.5*Math.PI; a-=0.005) {
+            let x = x0 + 0.15*height*Math.cos(a);
+            let y = y0 - 0.15*height*Math.sin(a);
+            this.path.push(new Path(x, y, 0.5*Math.PI - a, "brown"));
+        }
+        for (let i = 0; i < this.width; i++) {
+            let x = i + width*0.25;
+            this.path.push(new Path(x, height*0.2, 0, "white"));
+        }
+        this.x = this.x0 = this.path.length;
+        this.xmax = xoffset + this.path.length;
+        
+    }
+    draw(dc){
+        var x = this.x;
+        dc.fillStyle = this.color;
+        dc.font = this.font;
+
+        this.chars.forEach(element => {
+            if ((x > 0)&&(x < this.path.length)){
+                const i = Math.floor(x);    
+                const xx = this.path[i].x;
+                const yy = this.path[i].y + 50*Math.sin(x/100 - this.ticks/25);
+                dc.save();
+                dc.translate(xx, yy);
+                dc.rotate(this.path[i].ang);
+                dc.fillText(element.char, 0, 0);
+                dc.restore();
+            }
+            x += element.width;
+        });
+    }
+    update(){
+        this.ticks++;
+        this.x += this.dx;
+        this.y += this.dy;
+        if (this.x < -this.xmax) this.x = this.x0;
+    }
+}
 
 // ======================================================
 // Globals
 // ======================================================
+
+
 // ======================================================
 // Tick - Scene Particel Intro
 // ======================================================
@@ -134,6 +282,7 @@ async function sceneParticelIntro(ctx, t) {
     var dots = [];
     var angle = Math.random() * 2 * Math.PI;
     var angle2 = Math.random() * 2 * Math.PI;
+    var angle3 = Math.random() * 2 * Math.PI;
     var width = ctx.canvas.width;
     var height = ctx.canvas.height;
     const scrollText = "Så for 5 dage siden var jeg i DR byen og opleve Svend Brinkmann og Thomas Vinterberg sidde ved kaminen og snakke om hvordan vi kan leve med kriser. De tog udgangspunkt i nutiden og Donald Trumps behandling af Zelenskyj. Thomas fortalte hvordan han var stoppet med at se nyheder, noget som jeg kender fra mig selv og flere i min omgangskreds. Svend havde gjort det modsatte og læser flere nyheder end tidligere. Budskabet fra de to var at man skulle prøve at finde håbet og dyrke fællesskabet og kunsten. Jeg vil ikke sige at jeg blev frelst, men jeg indså at jeg finder håbet i de ting de nævner. Dog synes jeg at der manglede forholdet til naturen. Sammen med fællesskabet og kunsten er der også naturen, som giver plads til refleksion og fordybelse både derude og i vindueskarmen.";
@@ -141,8 +290,8 @@ async function sceneParticelIntro(ctx, t) {
     const crisptext = "CR!SP";
 
     var mask = document.createElement("canvas");
-    mask.width = ctx.canvas.width*1.3;
-    mask.height = ctx.canvas.height*1.3;
+    mask.width = width*1.3;
+    mask.height = height*1.3;
     const maskdc = mask.getContext("2d");
     maskdc.fillStyle = "rgba(0,0,0,0.6)";
     maskdc.fillRect(0, 0, mask.width, mask.height);
@@ -154,20 +303,70 @@ async function sceneParticelIntro(ctx, t) {
     maskdc.globalCompositeOperation = "source-over";
 
     var scrollermask = document.createElement("canvas");
-    scrollermask.width = ctx.canvas.width;
-    scrollermask.height = ctx.canvas.height;
+    scrollermask.width = width;
+    scrollermask.height = height;
     const scrollerdc = scrollermask.getContext("2d");
 
     var radarcanvas = document.createElement("canvas");
-    radarcanvas.width = ctx.canvas.width;
-    radarcanvas.height = ctx.canvas.height;
+    radarcanvas.width = width;
+    radarcanvas.height = height;
     const radardc = scrollermask.getContext("2d");
 
+// wait for click on screen event to start the animation
+    scrollerdc.font = "100px Russo One";
+    scrollerdc.clearRect(0,0,width,height);
+    scrollerdc.fillStyle = "rgba(0,0,0,1)";
+    scrollerdc.fillRect(0,0,width,height);
+    scrollerdc.globalCompositeOperation = "destination-out";
+    let string = "Click on window to start demo";
+    let stringArray = string.split("|");
+    let xtop = height / 2 - 25;
+    stringArray.forEach((str, index) => {
+        const xsize = scrollerdc.measureText(str).width;
+        scrollerdc.fillStyle = "white";
+        scrollerdc.fillText(str, (width-xsize)/2 + 25, xtop + index * 130);
+    });
+
+    var scroller = new Scroller(scrollText, "100px Russo One", ctx, width, width, height/2, height, -8, 0, "white");
+//    var scroller2 = new Scroller(scrollText2, "100px Russo One", dc, width, width, height/2, height, -10, 0, "white");
 
     while (!t.running) {
-        await new Promise(resolve => setTimeout(resolve, 10));
+        let buffer = document.createElement('canvas');
+        buffer.width = width;
+        buffer.height = height;
+        const dc = buffer.getContext('2d');        
+        drawNoise(dc, width, height, 40);
+        drawPixelate(dc, buffer, 8);
+        scrollerdc.globalCompositeOperation = "source-over";
+        dc.drawImage(scrollermask, 0, 0);
+        dc.fillStyle = "rgba(0,0,0,0)";
+        dc.fillRect(0, 0, buffer.width, buffer.height);
+        t.frameBuffer.push(buffer);
+        while (t.frameBuffer.length > 50) {
+            await new Promise(resolve => setTimeout(resolve, 10));
+        }
     }
 
+    for(var count = 0; count < 100; count++) {
+        let buffer = document.createElement('canvas');
+        buffer.width = width;
+        buffer.height = height;
+        const dc = buffer.getContext('2d');        
+        drawNoise(dc, width, height, 40);
+        drawPixelate(dc, buffer, 8);
+        scrollerdc.globalCompositeOperation = "source-over";
+        dc.drawImage(scrollermask, 0, 0);
+        dc.fillStyle = "rgba(0,0,0," + (count/100) + ")";
+        dc.fillRect(0, 0, buffer.width, buffer.height);
+        t.frameBuffer.push(buffer);
+        while (t.frameBuffer.length > 50) {
+            await new Promise(resolve => setTimeout(resolve, 10));
+        }
+    }
+
+
+    // start the music
+    audio.play();   
 
     // add particles
     for(var count = 0; count < 250; count++) {
@@ -201,7 +400,7 @@ async function sceneParticelIntro(ctx, t) {
     }
 
     // run intro
-    for(var count = 0; count < 250; count++) {
+    for(var count = 0; count < 500; count++) {
         let buffer = document.createElement('canvas');
         buffer.width = width;
         buffer.height = height;
@@ -279,18 +478,148 @@ async function sceneParticelIntro(ctx, t) {
     dots = [];
 
     // scroller fade in
-    for(var count = 0; count < 125; count++) {
+    for(var count = 0; count < 350; count++) {
         let buffer = document.createElement('canvas');
         buffer.width = width;
         buffer.height = height;
         const dc = buffer.getContext('2d');        
-        dc.fillStyle = "black";
-        dc.fillRect(0, 0, width, height);
-        dc.fillStyle = "rgba(255, 255, 255, " + (count / 125) + ")";
-        dc.font = "bold 60px Arial";
-        const str = "Welcome to the Particle World!";
-        const xsize = dc.measureText(str).width;
-        dc.fillText(str, (width - xsize) / 2, height / 2);
+
+        dc.fillStyle = "blue";
+        dc.fillRect(0,0,buffer.width,buffer.height);
+
+        dc.strokeStyle = "cyan";
+        dc.lineWidth = 240 + 200 * Math.sin(angle3);
+        dc.beginPath();
+        const l = width;
+        const cx = width/2 + 0.4 * width * Math.cos(angle3*2);
+        const cy = height/2 + 0.4 * height * Math.sin(angle3);
+        dc.moveTo(cx, cy);
+        dc.lineTo(cx + l * Math.cos(angle3), cy + l * Math.sin(angle3));
+        dc.moveTo(cx, cy);
+        dc.lineTo(cx - l * Math.cos(angle3), cy - l * Math.sin(angle3));
+        dc.stroke();
+        const xoff = mask.width*0.10*Math.cos(angle3/2) - mask.width*0.1;
+        const yoff = mask.height*0.10*Math.sin(angle3/2) - mask.height*0.1;
+        scrollerdc.clearRect(0,0,width,height);
+        scrollerdc.fillStyle = "rgba(0,0,0,0.4)";
+        scrollerdc.fillRect(0,0,width,height);
+        scrollerdc.globalCompositeOperation = "destination-out";
+        scroller.draw(scrollerdc);
+        scrollerdc.globalCompositeOperation = "source-over";
+        dc.drawImage(scrollermask, 0, 0);
+        scroller.update();
+
+        dc.drawImage(mask, xoff, yoff);
+        angle3 += 0.01;
+
+        dc.fillStyle = "rgba(0,0,0," + (1-count/350) + ")";
+        dc.fillRect(0, 0, buffer.width, buffer.height);
+
+        t.frameBuffer.push(buffer);
+        while (t.frameBuffer.length > 50) {
+            await new Promise(resolve => setTimeout(resolve, 10));
+        }
+    }
+
+    // scroller run for 34 seconds
+
+    let glitchBuffer = null;
+
+    for(var count = 0; count < 34*60; count++) {
+        let buffer = document.createElement('canvas');
+        buffer.width = width;
+        buffer.height = height;
+        const dc = buffer.getContext('2d');        
+
+        dc.fillStyle = "red";
+        dc.fillRect(0,0,buffer.width,buffer.height);
+
+        dc.strokeStyle = "cyan";
+        dc.lineWidth = 240 + 200 * Math.sin(angle3);
+        dc.beginPath();
+        const l = width;
+        const cx = width/2 + 0.4 * width * Math.cos(angle3*2);
+        const cy = height/2 + 0.4 * height * Math.sin(angle3);
+        dc.moveTo(cx, cy);
+        dc.lineTo(cx + l * Math.cos(angle3), cy + l * Math.sin(angle3));
+        dc.moveTo(cx, cy);
+        dc.lineTo(cx - l * Math.cos(angle3), cy - l * Math.sin(angle3));
+        dc.stroke();
+        const xoff = mask.width*0.10*Math.cos(angle3/2) - mask.width*0.1;
+        const yoff = mask.height*0.10*Math.sin(angle3/2) - mask.height*0.1;
+        scrollerdc.clearRect(0,0,width,height);
+        scrollerdc.fillStyle = "rgba(0,0,0,0.4)";
+        scrollerdc.fillRect(0,0,width,height);
+        scrollerdc.globalCompositeOperation = "destination-out";
+        scroller.draw(scrollerdc);
+        scrollerdc.globalCompositeOperation = "source-over";
+        dc.drawImage(scrollermask, 0, 0);
+        scroller.update();
+
+        dc.drawImage(mask, xoff, yoff);
+        angle3 += 0.01;
+
+        glitchBuffer = buffer
+        t.frameBuffer.push(buffer);
+        while (t.frameBuffer.length > 50) {
+            await new Promise(resolve => setTimeout(resolve, 10));
+        }
+    }
+    
+    // Glitch for 10 seconds
+    for(var count = 0; count < 7*60; count++) {
+        let buffer = document.createElement('canvas');
+        buffer.width = width;
+        buffer.height = height;
+        const dc = buffer.getContext('2d');        
+
+        glitch(glitchBuffer);
+//            drawNoise(dc, width, height, 40);
+        drawPixelate(dc, glitchBuffer, 16);
+        scroller.update();
+        angle3 += 0.01;
+
+       t.frameBuffer.push(buffer);
+        while (t.frameBuffer.length > 50) {
+            await new Promise(resolve => setTimeout(resolve, 10));
+        }
+    }
+
+    for(var count = 0; count < 34*60; count++) {
+        let buffer = document.createElement('canvas');
+        buffer.width = width;
+        buffer.height = height;
+        const dc = buffer.getContext('2d');        
+
+        dc.fillStyle = "red";
+        dc.fillRect(0,0,buffer.width,buffer.height);
+
+        dc.strokeStyle = "cyan";
+        dc.lineWidth = 240 + 200 * Math.sin(angle3);
+        dc.beginPath();
+        const l = width;
+        const cx = width/2 + 0.4 * width * Math.cos(angle3*2);
+        const cy = height/2 + 0.4 * height * Math.sin(angle3);
+        dc.moveTo(cx, cy);
+        dc.lineTo(cx + l * Math.cos(angle3), cy + l * Math.sin(angle3));
+        dc.moveTo(cx, cy);
+        dc.lineTo(cx - l * Math.cos(angle3), cy - l * Math.sin(angle3));
+        dc.stroke();
+        const xoff = mask.width*0.10*Math.cos(angle3/2) - mask.width*0.1;
+        const yoff = mask.height*0.10*Math.sin(angle3/2) - mask.height*0.1;
+        scrollerdc.clearRect(0,0,width,height);
+        scrollerdc.fillStyle = "rgba(0,0,0,0.4)";
+        scrollerdc.fillRect(0,0,width,height);
+        scrollerdc.globalCompositeOperation = "destination-out";
+        scroller.draw(scrollerdc);
+        scrollerdc.globalCompositeOperation = "source-over";
+        dc.drawImage(scrollermask, 0, 0);
+        scroller.update();
+
+        dc.drawImage(mask, xoff, yoff);
+        angle3 += 0.01;
+
+        glitchBuffer = buffer
         t.frameBuffer.push(buffer);
         while (t.frameBuffer.length > 50) {
             await new Promise(resolve => setTimeout(resolve, 10));
@@ -342,7 +671,6 @@ window.addEventListener('load', function() {
 
     let t = new PTick();
     t.action(canvas.getContext('2d'));
-    const audio = new Audio('./Mixdown_14.mp3'); // Replace with your MP3 file path or URL
 
     window.addEventListener('resize', resizeCanvasCSS);
     // Fullscreen on user click (required by browsers)
@@ -355,7 +683,6 @@ window.addEventListener('load', function() {
             canvas.msRequestFullscreen();
         }
         t.start();
-        audio.play();   
         window.removeEventListener('click', goFullscreen); // Remove listener after first click
 
     }
