@@ -1740,6 +1740,7 @@ window.addEventListener('load', function() {
             ctx.drawImage(frame, 0, 0);
         }
 
+/*        
         ctx.fillStyle = "gray";
         ctx.font = "40px Arial";
         const str = "fps: " + t.fps + " | buffers: " + t.frameBuffer.length + " | buffer time: " + Math.floor(1000 * t.frameBuffer.length / t.fps) + "ms | elapsed: " + elapsed.toFixed(2) + "ms";
@@ -1747,6 +1748,7 @@ window.addEventListener('load', function() {
         ctx.fillRect((canvas.width-xsize)/2, canvas.height-80, xsize+50, 50);
         ctx.fillStyle = "white";
         ctx.fillText(str, (canvas.width-xsize)/2 + 25, canvas.height-40);
+*/
         requestAnimationFrame(animate);
     }
     animate(); 
