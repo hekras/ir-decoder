@@ -608,7 +608,7 @@ class PViewportData {
             dc.fillText(text, this.cursorx - textWidth/2, this.y + this.h - 10);
             dc.fillStyle = "yellow";
             dc.font = "40px Arial";
-            const text2 = "Logic analyzer v7";
+            const text2 = "Logic analyzer v8";
             const textWidth2 = dc.measureText(text2).width;
             dc.fillText(text2, this.w - textWidth2, 40);
             dc.fillText("Data capture", 30, 40);
@@ -828,6 +828,42 @@ async function sceneParticelIntro(ctx, t) {
     radarcanvas.height = height;
     const radardc = scrollermask.getContext("2d");
 
+    let vpdat1 = new PViewportData(30, 50, width-60, 200);
+    vpdat1.setData(capturequeue[1]);
+    vpstat1 = new PViewportStatistic(30, 300, width-60, 200, vpdat1);
+    vpstat1.calculate();
+    vpdecoder1 = new PViewportDecoder(30, 580, width-60, height-580, vpdat1);
+    vpdecoder1.decodeData();
+    let dat1buffer = document.createElement('canvas');
+    dat1buffer.width = width;
+    dat1buffer.height = height;
+    const dat1dc = dat1buffer.getContext('2d');
+    dat1dc.fillStyle = "black";
+    dat1dc.fillRect(0, 0, width, height);
+    vpdat1.render(dat1dc, vpstat1.hover3);
+    vpstat1.render(dat1dc);
+    vpdecoder1.render(dat1dc, vpstat1.hover3);
+
+    let vpdat2 = new PViewportData(30, 50, width-60, 200);
+    vpdat2.setData(capturequeue[6]);
+    vpstat2 = new PViewportStatistic(30, 300, width-60, 200, vpdat2);
+    vpstat2.calculate();
+    vpdecoder2 = new PViewportDecoder(30, 580, width-60, height-580, vpdat2);
+    vpdecoder2.decodeData();
+    let dat2buffer = document.createElement('canvas');
+    dat2buffer.width = width;
+    dat2buffer.height = height;
+    const dat2dc = dat2buffer.getContext('2d');
+    dat2dc.fillStyle = "black";
+    dat2dc.fillRect(0, 0, width, height);
+    vpdat2.render(dat2dc, vpstat1.hover3);
+    vpstat2.render(dat2dc);
+    vpdecoder2.render(dat2dc, vpstat1.hover3);
+
+    var scroller = new Scroller(scrollText, "100px Russo One", ctx, width, width, height/2, height, -8, 0, "white");
+//    var scroller2 = new Scroller(scrollText2, "100px Russo One", dc, width, width, height/2, height, -10, 0, "white");
+
+
 // wait for click on screen event to start the animation
     scrollerdc.font = "100px Russo One";
     scrollerdc.clearRect(0,0,width,height);
@@ -859,7 +895,7 @@ async function sceneParticelIntro(ctx, t) {
         }
     }
 
-    for(var count = 0; count < 100; count++) {
+    for(var count = 0; count < t.fps; count++) {
         let buffer = document.createElement('canvas');
         buffer.width = width;
         buffer.height = height;
@@ -868,7 +904,7 @@ async function sceneParticelIntro(ctx, t) {
         drawPixelate(dc, buffer, 8);
         scrollerdc.globalCompositeOperation = "source-over";
         dc.drawImage(scrollermask, 0, 0);
-        dc.fillStyle = "rgba(0,0,0," + (count/100) + ")";
+        dc.fillStyle = "rgba(0,0,0," + (count/t.fps) + ")";
         dc.fillRect(0, 0, buffer.width, buffer.height);
         t.frameBuffer.push(buffer);
         while (t.frameBuffer.length > 50) {
@@ -876,13 +912,11 @@ async function sceneParticelIntro(ctx, t) {
         }
     }
 
-    var scroller = new Scroller(scrollText, "100px Russo One", ctx, width, width, height/2, height, -8, 0, "white");
-//    var scroller2 = new Scroller(scrollText2, "100px Russo One", dc, width, width, height/2, height, -10, 0, "white");
 
     // start the music
     audio.play();  
     
-    const introCount = t.fps * 17; // 17 seconds
+    const introCount = t.fps * 19.5; // 17 seconds
     const introFadein = Math.floor(introCount * 0.25); // 25% fade in
     const introrunning = Math.floor(introCount * 0.50); // 50% run
     const introFadeout = Math.floor(introCount * 0.1); // 12% fadeout
@@ -1226,7 +1260,188 @@ async function sceneParticelIntro(ctx, t) {
     }
 
 
+
+    // draw logic analyzer - data 1
+    const analyzerCount1 = t.fps * 16; // 16 seconds
+    const analyzerFadein = 3 * t.fps; // 2 seconds fade in
+    const analyzerDat1Progress = 3 * t.fps; // 2 seconds fade in
+    const analyzerStat1Progress = 3 * t.fps; // 2 seconds fade in
+    const analyzerDecoder1Progress = 3 * t.fps; // 2 seconds fade in
+    const analyzerWait1 = analyzerCount1 - analyzerFadein - analyzerDat1Progress - analyzerStat1Progress - analyzerDecoder1Progress; // 2 seconds fade in
+    
+    for(var count = 0; count < analyzerFadein; count++) {
+        let buffer = document.createElement('canvas');
+        buffer.width = width;
+        buffer.height = height;
+        const dc = buffer.getContext('2d');
+        dc.drawImage(dat1buffer, 0, 0);
+        dc.fillStyle = "black";
+        dc.fillRect(vpdat1.x+2 , vpdat1.y+2, vpdat1.w-4, vpdat1.h-4);
+        dc.fillRect(vpstat1.x+2, vpstat1.y+2, vpstat1.w-4, vpstat1.h-4);
+        dc.fillRect(vpdecoder1.x, vpdecoder1.y-2, vpdecoder1.w-4, vpdecoder1.h );
+        dc.fillStyle = "rgba(0,0,0," + (1-count/analyzerFadein) + ")";
+        dc.fillRect(0, 0, buffer.width, buffer.height);
+
+        t.frameBuffer.push(buffer);
+        while (t.frameBuffer.length > 50) {
+            await new Promise(resolve => setTimeout(resolve, 10));
+        }
+    }
+
+    for(var count = 0; count < analyzerDat1Progress; count++) {
+        let buffer = document.createElement('canvas');
+        buffer.width = width;
+        buffer.height = height;
+        const dc = buffer.getContext('2d');
+        dc.drawImage(dat1buffer, 0, 0);
+        const progress = count / analyzerDat1Progress;
+        dc.fillStyle = "black";
+        dc.fillRect(vpdat1.x+2 + vpdat1.w *progress-4, vpdat1.y+2, vpdat1.w * (1-progress), vpdat1.h-4);
+        dc.fillRect(vpdat1.x+2 , vpdat1.y+vpdat1.h-45, vpdat1.w-4, 43);
+        dc.fillRect(vpstat1.x+2, vpstat1.y+2, vpstat1.w-4, vpstat1.h-4);
+        dc.fillRect(vpdecoder1.x, vpdecoder1.y-2, vpdecoder1.w-4, vpdecoder1.h );
+
+        t.frameBuffer.push(buffer);
+        while (t.frameBuffer.length > 50) {
+            await new Promise(resolve => setTimeout(resolve, 10));
+        }
+    }
+
+    for(var count = 0; count < analyzerStat1Progress; count++) {
+        let buffer = document.createElement('canvas');
+        buffer.width = width;
+        buffer.height = height;
+        const dc = buffer.getContext('2d');
+        dc.drawImage(dat1buffer, 0, 0);
+        const progress = count / analyzerStat1Progress;
+        dc.fillRect(vpdat1.x+2 , vpdat1.y+vpdat1.h-45, vpdat1.w-4, 43);
+        dc.fillRect(vpstat1.x+2 + vpstat1.w *progress-4, vpstat1.y+2, vpstat1.w * (1-progress), vpstat1.h-4);
+        dc.fillRect(vpdecoder1.x, vpdecoder1.y-2, vpdecoder1.w-4, vpdecoder1.h );
+
+        t.frameBuffer.push(buffer);
+        while (t.frameBuffer.length > 50) {
+            await new Promise(resolve => setTimeout(resolve, 10));
+        }
+    }
+
+    for(var count = 0; count < analyzerDecoder1Progress; count++) {
+        let buffer = glitchBuffer = document.createElement('canvas');
+        buffer.width = width;
+        buffer.height = height;
+        const dc = buffer.getContext('2d');
+        dc.drawImage(dat1buffer, 0, 0);
+        const progress = count / analyzerDecoder1Progress;
+        dc.fillRect(vpdat1.x+2 + vpdat1.w *progress-4, vpdat1.y+vpdat1.h-48, vpdat1.w * (1-progress), 45);
+        dc.fillRect(vpdecoder1.x, vpdecoder1.y + progress* vpdecoder1.h, vpdecoder1.w-4, vpdecoder1.h *(1-progress));
+        
+        t.frameBuffer.push(buffer);
+        while (t.frameBuffer.length > 50) {
+            await new Promise(resolve => setTimeout(resolve, 10));
+        }
+    }
+
+    for(var count = 0; count < analyzerWait1; count++) {
+        t.frameBuffer.push(glitchBuffer);
+        while (t.frameBuffer.length > 50) {
+            await new Promise(resolve => setTimeout(resolve, 10));
+        }
+    }
+
+    // draw logic analyzer - data 1
+    const analyzerCount2 = t.fps * 16.5; // 16 seconds
+    const analyzerFadeout = 3 * t.fps; // 2 seconds fade in
+    const analyzerDat2Progress = 3 * t.fps; // 2 seconds fade in
+    const analyzerStat2Progress = 3 * t.fps; // 2 seconds fade in
+    const analyzerDecoder2Progress = 3 * t.fps; // 2 seconds fade in
+    
+    for(var count = 0; count < analyzerFadeout; count++) {
+        let buffer = document.createElement('canvas');
+        buffer.width = width;
+        buffer.height = height;
+        const dc = buffer.getContext('2d');
+        dc.drawImage(dat1buffer, 0, 0);
+        dc.fillStyle = "rgba(0,0,0," + (count/analyzerFadeout) + ")";
+        dc.fillRect(vpdat1.x+2 , vpdat1.y+2, vpdat1.w-4, vpdat1.h-4);
+        dc.fillRect(vpstat1.x+2, vpstat1.y+2, vpstat1.w-4, vpstat1.h-4);
+        dc.fillRect(vpdecoder1.x, vpdecoder1.y-2, vpdecoder1.w-4, vpdecoder1.h );
+
+        t.frameBuffer.push(buffer);
+        while (t.frameBuffer.length > 50) {
+            await new Promise(resolve => setTimeout(resolve, 10));
+        }
+    }
+
+    for(var count = 0; count < analyzerDat2Progress; count++) {
+        let buffer = document.createElement('canvas');
+        buffer.width = width;
+        buffer.height = height;
+        const dc = buffer.getContext('2d');
+        dc.drawImage(dat2buffer, 0, 0);
+        const progress = count / analyzerDat2Progress;
+        dc.fillStyle = "black";
+        dc.fillRect(vpdat2.x+2 + vpdat2.w *progress-4, vpdat2.y+2, vpdat2.w * (1-progress), vpdat2.h-4);
+        dc.fillRect(vpdat2.x+2 , vpdat2.y+vpdat2.h-45, vpdat2.w-4, 43);
+        dc.fillRect(vpstat2.x+2, vpstat2.y+2, vpstat2.w-4, vpstat2.h-4);
+        dc.fillRect(vpdecoder2.x, vpdecoder2.y-2, vpdecoder2.w-4, vpdecoder2.h );
+
+        t.frameBuffer.push(buffer);
+        while (t.frameBuffer.length > 50) {
+            await new Promise(resolve => setTimeout(resolve, 10));
+        }
+    }
+
+    for(var count = 0; count < analyzerStat2Progress; count++) {
+        let buffer = document.createElement('canvas');
+        buffer.width = width;
+        buffer.height = height;
+        const dc = buffer.getContext('2d');
+        dc.drawImage(dat2buffer, 0, 0);
+        const progress = count / analyzerStat2Progress;
+        dc.fillRect(vpdat2.x+2 , vpdat2.y+vpdat2.h-45, vpdat2.w-4, 43);
+        dc.fillRect(vpstat2.x+2 + vpstat2.w *progress-4, vpstat2.y+2, vpstat2.w * (1-progress), vpstat2.h-4);
+        dc.fillRect(vpdecoder2.x, vpdecoder2.y-2, vpdecoder2.w-4, vpdecoder2.h );
+
+        t.frameBuffer.push(buffer);
+        while (t.frameBuffer.length > 50) {
+            await new Promise(resolve => setTimeout(resolve, 10));
+        }
+    }
+
+    for(var count = 0; count < analyzerDecoder2Progress; count++) {
+        let buffer = glitchBuffer = document.createElement('canvas');
+        buffer.width = width;
+        buffer.height = height;
+        const dc = buffer.getContext('2d');
+        dc.drawImage(dat2buffer, 0, 0);
+        const progress = count / analyzerDecoder2Progress;
+        dc.fillRect(vpdat2.x+2 + vpdat2.w *progress-4, vpdat2.y+vpdat2.h-48, vpdat2.w * (1-progress), 45);
+        dc.fillRect(vpdecoder2.x, vpdecoder2.y + progress* vpdecoder2.h, vpdecoder2.w-4, vpdecoder2.h *(1-progress));
+        
+        t.frameBuffer.push(buffer);
+        while (t.frameBuffer.length > 50) {
+            await new Promise(resolve => setTimeout(resolve, 10));
+        }
+    }
+
+    for(var count = 0; count < analyzerFadeout; count++) {
+        let buffer = document.createElement('canvas');
+        buffer.width = width;
+        buffer.height = height;
+        const dc = buffer.getContext('2d');
+        dc.drawImage(glitchBuffer, 0, 0);
+        dc.fillStyle = "rgba(0,0,0," + (count/analyzerFadeout) + ")";
+        dc.fillRect(0, 0, buffer.width, buffer.height);
+
+        t.frameBuffer.push(buffer);
+        while (t.frameBuffer.length > 50) {
+            await new Promise(resolve => setTimeout(resolve, 10));
+        }
+    }
+
+
 }
+
+
 
 
 // ======================================================
