@@ -804,7 +804,7 @@ async function sceneParticelIntro(ctx, t) {
     let glitchBuffer = null;
     const scrollText = "Så for 5 dage siden var jeg i DR byen og opleve Svend Brinkmann og Thomas Vinterberg sidde ved kaminen og snakke om hvordan vi kan leve med kriser. De tog udgangspunkt i nutiden og Donald Trumps behandling af Zelenskyj. Thomas fortalte hvordan han var stoppet med at se nyheder, noget som jeg kender fra mig selv og flere i min omgangskreds. Svend havde gjort det modsatte og læser flere nyheder end tidligere. Budskabet fra de to var at man skulle prøve at finde håbet og dyrke fællesskabet og kunsten. Jeg vil ikke sige at jeg blev frelst, men jeg indså at jeg finder håbet i de ting de nævner. Dog synes jeg at der manglede forholdet til naturen. Sammen med fællesskabet og kunsten er der også naturen, som giver plads til refleksion og fordybelse både derude og i vindueskarmen.";
     const scrollText2 = ".... WE ARE BACK  .... Some finish greetings to friends and all the other people who are reading this. I hope you are all doing well and enjoying the demo. This is a test of the scrolling text functionality. The text should scroll smoothly across the screen, providing a nice visual effect. Let's see how it goes!";
-    const crisptext = "CR!SP";
+    const crisptext = ["█▀▀ █▀█ █ █▀ █▀█", "█▄▄ █▀▄ ▄ ▄█ █▀▀"];
 
     var mask = document.createElement("canvas");
     mask.width = width*1.3;
@@ -813,10 +813,11 @@ async function sceneParticelIntro(ctx, t) {
     maskdc.fillStyle = "rgba(0,0,0,0.6)";
     maskdc.fillRect(0, 0, mask.width, mask.height);
     maskdc.globalCompositeOperation = "destination-out";
-    maskdc.font = "300px Russo One";        // 300px
+    maskdc.font = "100px Arial";        
     maskdc.textAlign = "center";
     maskdc.textBaseline = "middle";
-    maskdc.fillText(crisptext, mask.width / 2, mask.height / 2);
+    maskdc.fillText(crisptext[0], mask.width / 2, mask.height / 2 - 68);
+    maskdc.fillText(crisptext[1], mask.width / 2, mask.height / 2 + 68);
     maskdc.globalCompositeOperation = "source-over";
 
     var scrollermask = document.createElement("canvas");
@@ -861,12 +862,12 @@ async function sceneParticelIntro(ctx, t) {
     vpstat2.render(dat2dc);
     vpdecoder2.render(dat2dc, vpstat1.hover3);
 
-    var scroller = new Scroller(scrollText, "100px Russo One", ctx, width, width, height/2, height, -8, 0, "white");
-    var scroller2 = new Scroller(scrollText2, "100px Russo One", ctx, width, width, height/2, height, -10, 0, "white");
+    var scroller = new Scroller(scrollText, "bold 100px Arial", ctx, width, width, height/2, height, -8, 0, "white");
+    var scroller2 = new Scroller(scrollText2, "bold 100px Arial", ctx, width, width, height/2, height, -10, 0, "white");
 
 
 // wait for click on screen event to start the animation
-    scrollerdc.font = "100px Russo One";
+    scrollerdc.font = "80px Arial";
     scrollerdc.clearRect(0,0,width,height);
     scrollerdc.fillStyle = "rgba(0,0,0,1)";
     scrollerdc.fillRect(0,0,width,height);
@@ -913,10 +914,14 @@ async function sceneParticelIntro(ctx, t) {
         }
     }
 
+    while (t.frameBuffer.length > 0) {
+        await new Promise(resolve => setTimeout(resolve, 10));
+    }
+
     // start the music
     audio.play();  
     
-    const introCount = t.fps * 19.5; // 17 seconds
+    const introCount = t.fps * 17; // 17 seconds
     const introFadein = Math.floor(introCount * 0.25); // 25% fade in
     const introrunning = Math.floor(introCount * 0.50); // 50% run
     const introFadeout = Math.floor(introCount * 0.1); // 12% fadeout
@@ -1670,8 +1675,8 @@ window.addEventListener('load', function() {
     document.body.appendChild(canvas);
 
     // Set internal resolution
-    canvas.width = 1920;
-    canvas.height = 1080;
+    canvas.width = 1280; //1920;
+    canvas.height = 720; //1080;
 
     // Function to maintain aspect ratio and center the canvas
     function resizeCanvasCSS() {
